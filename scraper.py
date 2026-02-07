@@ -7,6 +7,22 @@ from datetime import datetime
 URL = "https://sbi.bank.in/web/interest-rates/deposit-rates/retail-domestic-term-deposits"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+def is_valid_fd_row(text):
+    t = text.lower()
+
+    if "non callable" in t:
+        return False
+    if "above card rate" in t:
+        return False
+    if "bonus" in t:
+        return False
+
+    # must contain tenure words
+    if not any(word in t for word in ["day", "month", "year"]):
+        return False
+
+    return True
+
 def extract_sbi():
     r = requests.get(URL, headers=HEADERS, timeout=30)
     soup = BeautifulSoup(r.text, "lxml")
@@ -19,8 +35,7 @@ def extract_sbi():
     for row in rows:
         text = row.get_text(" ", strip=True)
 
-        # ignore non-callable deposits
-        if "non callable" in text.lower():
+        if not is_valid_fd_row(text):
             continue
 
         rates = re.findall(r"\d+\.\d+", text)
@@ -28,7 +43,7 @@ def extract_sbi():
         for r in rates:
             rate = float(r)
 
-            if rate > best_rate and rate < 15:  # sanity filter
+            if rate > best_rate and rate < 15:
                 best_rate = rate
                 best_row = text
 
@@ -52,4 +67,4 @@ result = {
 with open("fd_rates.json", "w") as f:
     json.dump(result, f, indent=2)
 
-print("SBI highest FD scraped successfully!")
+print("SBI cleaned FD scraped successfully!")
