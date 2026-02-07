@@ -1,7 +1,10 @@
 import requests
-import re
 import json
+from bs4 import BeautifulSoup
 from datetime import datetime
+import re
+
+HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 BANKS = [
     {"name": "SBI", "url": "https://sbi.co.in/web/interest-rates/deposit-rates/retail-domestic-term-deposits"},
@@ -16,14 +19,14 @@ BANKS = [
     {"name": "HDFC Small Finance", "url": "https://www.hdfcbank.com/sme/deposits/fixed-deposit-interest-rates"}
 ]
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0"
-}
-
 def extract_best_rate(html):
-    rates = re.findall(r"\d+\.\d+%", html)
+    soup = BeautifulSoup(html, "lxml")
+    text = soup.get_text()
+
+    rates = re.findall(r"\d+\.\d+%", text)
     if not rates:
         return None
+
     rates = [float(r.replace("%", "")) for r in rates]
     return max(rates)
 
@@ -32,25 +35,25 @@ results = []
 for bank in BANKS:
     try:
         print(f"Fetching {bank['name']}...")
-        response = requests.get(bank["url"], headers=HEADERS, timeout=20)
-        html = response.text
+
+        r = requests.get(bank["url"], headers=HEADERS, timeout=30)
+        html = r.text
 
         best = extract_best_rate(html)
 
         if best:
-            row = {
+            results.append({
                 "bank": bank["name"],
-                "scheme": "Highest FD Slab",
-                "period": "Best Available",
+                "scheme": "Best FD Slab",
+                "period": "Highest Available",
                 "rate_general": f"{best:.2f}%",
                 "rate_senior": f"{best + 0.5:.2f}%"
-            }
-            results.append(row)
+            })
         else:
-            print(f"No rate found for {bank['name']}")
+            print("No rate found for", bank["name"])
 
     except Exception as e:
-        print(f"Error scraping {bank['name']}:", e)
+        print("Error scraping", bank["name"], e)
 
 final = {
     "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
