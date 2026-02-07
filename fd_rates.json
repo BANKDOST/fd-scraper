@@ -1,12 +1,12 @@
 {
-  "last_updated": "2026-02-07 02:29",
+  "last_updated": "2026-02-07 16:47",
   "banks": [
     {
       "bank": "SBI",
-      "scheme": "Retail FD (<3 Cr)",
-      "period": "2 years to less than 3 years",
-      "rate_general": "6.40%",
-      "rate_senior": "6.90%"
+      "scheme": "Highest Callable FD",
+      "period": "2 Years 0.40% above Card Rate 6.80% 7.30%",
+      "rate_general": "7.30%",
+      "rate_senior": "7.80%"
     }
   ]
 }
