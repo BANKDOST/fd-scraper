@@ -1,34 +1,12 @@
 {
-  "last_updated": "2026-02-07 02:18",
-  "total_banks": 4,
+  "last_updated": "2026-02-07 02:22",
   "banks": [
     {
       "bank": "SBI",
       "scheme": "Best FD Slab",
-      "period": "Highest Available",
-      "rate_general": "11.60%",
-      "rate_senior": "12.10%"
-    },
-    {
-      "bank": "ICICI",
-      "scheme": "Best FD Slab",
-      "period": "Highest Available",
-      "rate_general": "7.20%",
-      "rate_senior": "7.70%"
-    },
-    {
-      "bank": "Axis",
-      "scheme": "Best FD Slab",
-      "period": "Highest Available",
-      "rate_general": "7.10%",
-      "rate_senior": "7.60%"
-    },
-    {
-      "bank": "IDFC First",
-      "scheme": "Best FD Slab",
-      "period": "Highest Available",
-      "rate_general": "1.99%",
-      "rate_senior": "2.49%"
+      "period": "2 Years 0.40% above Card Rate 6.80% 7.30%",
+      "rate_general": "7.30%",
+      "rate_senior": "7.80%"
     }
   ]
 }
