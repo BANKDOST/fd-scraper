@@ -58,21 +58,24 @@ def extract_hdfc():
 
 
 # ---------- Bank of Baroda ----------
+
 def extract_bob():
     URL = "https://bankofbaroda.bank.in/interest-rate-and-service-charges/deposits-interest-rates/fixed-deposits-callable-and-non-callable-upto-ten-crores"
-    r = requests.get(URL, headers=HEADERS, timeout=30)
-    soup = BeautifulSoup(r.text, "lxml")
+
+    try:
+        r = requests.get(URL, headers=HEADERS, timeout=15)
+        soup = BeautifulSoup(r.text, "lxml")
+    except Exception as e:
+        print("BoB fetch failed:", e)
+        return 0, ""
 
     best_rate = 0
     best_period = ""
 
-    # Find the FD callable section by heading text
-    # Then find the first table that has 'Domestic Term Deposits'
-    tables = soup.find_all("table")
-
-    for table in tables:
+    for table in soup.find_all("table"):
         text = table.get_text().lower()
-        if "domestic term deposits including nro deposits below" in text:
+
+        if "domestic" in text:
             for row in table.find_all("tr")[1:]:
                 cols = [c.get_text(strip=True).replace("%", "") for c in row.find_all("td")]
 
@@ -87,6 +90,7 @@ def extract_bob():
             break
 
     return best_rate, best_period
+
 
 
 
