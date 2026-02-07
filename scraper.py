@@ -1,6 +1,7 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import re
 from datetime import datetime
 
 URL = "https://sbi.bank.in/web/interest-rates/deposit-rates/retail-domestic-term-deposits"
@@ -11,30 +12,27 @@ def extract_sbi():
     soup = BeautifulSoup(r.text, "lxml")
 
     best_rate = 0
-    best_period = ""
+    best_row = ""
 
-    table = soup.find("table")  # SBI main FD table
+    rows = soup.find_all("tr")
 
-    rows = table.find_all("tr")
+    for row in rows:
+        text = row.get_text(" ", strip=True)
 
-    for row in rows[1:]:  # skip header
-        cols = [c.get_text(strip=True) for c in row.find_all("td")]
+        # ignore non-callable deposits
+        if "non callable" in text.lower():
+            continue
 
-        if len(cols) >= 3:
-            period = cols[0]
+        rates = re.findall(r"\d+\.\d+", text)
 
-            try:
-                # revised general rate column (latest)
-                general_rate = float(cols[2])
+        for r in rates:
+            rate = float(r)
 
-                if general_rate > best_rate:
-                    best_rate = general_rate
-                    best_period = period
+            if rate > best_rate and rate < 15:  # sanity filter
+                best_rate = rate
+                best_row = text
 
-            except:
-                continue
-
-    return best_rate, best_period
+    return best_rate, best_row
 
 rate, period = extract_sbi()
 
@@ -43,7 +41,7 @@ result = {
     "banks": [
         {
             "bank": "SBI",
-            "scheme": "Retail FD (<3 Cr)",
+            "scheme": "Highest Callable FD",
             "period": period,
             "rate_general": f"{rate:.2f}%",
             "rate_senior": f"{rate + 0.5:.2f}%"
@@ -54,4 +52,4 @@ result = {
 with open("fd_rates.json", "w") as f:
     json.dump(result, f, indent=2)
 
-print("SBI FD scraped successfully!")
+print("SBI highest FD scraped successfully!")
