@@ -1,12 +1,12 @@
 {
-  "last_updated": "2026-02-07 16:51",
+  "last_updated": "2026-02-07 16:57",
   "banks": [
     {
       "bank": "SBI",
       "scheme": "Highest Callable FD",
-      "period": "2 Years 0.40% above Card Rate 6.80% 7.30%",
-      "rate_general": "7.30%",
-      "rate_senior": "7.80%"
+      "period": "5 years and up to 10 years 6.05 6.05 7.05* 7.05*",
+      "rate_general": "7.05%",
+      "rate_senior": "7.55%"
     }
   ]
 }
