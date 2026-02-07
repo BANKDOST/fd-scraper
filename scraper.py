@@ -1,53 +1,39 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-import re
 from datetime import datetime
 
 URL = "https://sbi.bank.in/web/interest-rates/deposit-rates/retail-domestic-term-deposits"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-def is_valid_fd_row(text):
-    t = text.lower()
-
-    if "non callable" in t:
-        return False
-    if "above card rate" in t:
-        return False
-    if "bonus" in t:
-        return False
-
-    # must contain tenure words
-    if not any(word in t for word in ["day", "month", "year"]):
-        return False
-
-    return True
-
 def extract_sbi():
     r = requests.get(URL, headers=HEADERS, timeout=30)
     soup = BeautifulSoup(r.text, "lxml")
 
+    # Find callable <= 3 Cr table
+    tables = soup.find_all("table")
+    target_table = tables[0]  # SBI page: first table is callable <= 3Cr
+
     best_rate = 0
-    best_row = ""
+    best_period = ""
 
-    rows = soup.find_all("tr")
+    for row in target_table.find_all("tr")[1:]:
+        cols = [c.get_text(strip=True).replace("*", "") for c in row.find_all("td")]
 
-    for row in rows:
-        text = row.get_text(" ", strip=True)
+        if len(cols) >= 3:
+            period = cols[0]
 
-        if not is_valid_fd_row(text):
-            continue
+            try:
+                general_rate = float(cols[2])  # general column only
 
-        rates = re.findall(r"\d+\.\d+", text)
+                if general_rate > best_rate:
+                    best_rate = general_rate
+                    best_period = period
 
-        for r in rates:
-            rate = float(r)
+            except:
+                continue
 
-            if rate > best_rate and rate < 15:
-                best_rate = rate
-                best_row = text
-
-    return best_rate, best_row
+    return best_rate, best_period
 
 rate, period = extract_sbi()
 
@@ -56,7 +42,7 @@ result = {
     "banks": [
         {
             "bank": "SBI",
-            "scheme": "Highest Callable FD",
+            "scheme": "Callable FD ≤ 3Cr",
             "period": period,
             "rate_general": f"{rate:.2f}%",
             "rate_senior": f"{rate + 0.5:.2f}%"
@@ -67,4 +53,4 @@ result = {
 with open("fd_rates.json", "w") as f:
     json.dump(result, f, indent=2)
 
-print("SBI cleaned FD scraped successfully!")
+print("SBI callable FD scraped successfully!")
