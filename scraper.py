@@ -1,46 +1,49 @@
 import requests
 from bs4 import BeautifulSoup
 import json
-import re
 from datetime import datetime
 
-URL = "https://sbi.co.in/web/interest-rates/deposit-rates/retail-domestic-term-deposits"
+URL = "https://sbi.bank.in/web/interest-rates/deposit-rates/retail-domestic-term-deposits"
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-def extract_sbi_best():
+def extract_sbi():
     r = requests.get(URL, headers=HEADERS, timeout=30)
     soup = BeautifulSoup(r.text, "lxml")
 
     best_rate = 0
     best_period = ""
 
-    tables = soup.find_all("table")
+    table = soup.find("table")  # SBI main FD table
 
-    for table in tables:
-        rows = table.find_all("tr")
+    rows = table.find_all("tr")
 
-        for row in rows:
-            text = row.get_text(" ", strip=True)
+    for row in rows[1:]:  # skip header
+        cols = [c.get_text(strip=True) for c in row.find_all("td")]
 
-            rates = re.findall(r"\d+\.\d+", text)
-            if rates:
-                rate = max(float(r) for r in rates)
+        if len(cols) >= 3:
+            period = cols[0]
 
-                if rate > best_rate:
-                    best_rate = rate
-                    best_period = text
+            try:
+                # revised general rate column (latest)
+                general_rate = float(cols[2])
+
+                if general_rate > best_rate:
+                    best_rate = general_rate
+                    best_period = period
+
+            except:
+                continue
 
     return best_rate, best_period
 
-
-rate, period = extract_sbi_best()
+rate, period = extract_sbi()
 
 result = {
     "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
     "banks": [
         {
             "bank": "SBI",
-            "scheme": "Best FD Slab",
+            "scheme": "Retail FD (<3 Cr)",
             "period": period,
             "rate_general": f"{rate:.2f}%",
             "rate_senior": f"{rate + 0.5:.2f}%"
