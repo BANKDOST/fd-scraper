@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-08 03:23",
+  "last_updated": "2026-02-08 03:40",
   "banks": [
     {
       "bank": "HDFC",
@@ -9,18 +9,18 @@
       "rate_senior": "6.95%"
     },
     {
+      "bank": "Bank of Baroda",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "444 days",
+      "rate_general": "6.45%",
+      "rate_senior": "6.95%"
+    },
+    {
       "bank": "SBI",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "2 years to less than 3 years",
       "rate_general": "6.40%",
       "rate_senior": "6.90%"
-    },
-    {
-      "bank": "Bank of Baroda",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "",
-      "rate_general": "0.00%",
-      "rate_senior": "0.50%"
     }
   ]
 }
