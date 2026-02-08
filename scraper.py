@@ -63,7 +63,6 @@ def extract_hdfc():
 
 # ---------- ICICI ----------
 
-# ---------- ICICI ----------
 def extract_icici():
     URL = "https://www.icicidirect.com/fd-and-bonds/icici-bank-fd"
 
@@ -73,21 +72,31 @@ def extract_icici():
     except:
         return 0, ""
 
-    text = soup.get_text(" ", strip=True)
-
-    # find all percentages like 6.50%
-    matches = re.findall(r"\d+\.\d+%", text)
-
     best_rate = 0
-    for m in matches:
-        rate = float(m.replace("%", ""))
-        if rate > best_rate:
-            best_rate = rate
+    best_period = ""
 
-    # fallback period text (banner doesn’t show exact tenure cleanly)
-    period = "Best advertised tenure"
+    for table in soup.find_all("table"):
+        text = table.get_text().lower()
 
-    return best_rate, period
+        if "fd interest rate for general and senior citizens" in text:
+            for row in table.find_all("tr")[1:]:
+                cols = [c.get_text(strip=True) for c in row.find_all("td")]
+
+                if len(cols) >= 2:
+                    period = cols[0]
+                    rate_text = cols[1].replace("%", "")
+
+                    try:
+                        rate = float(rate_text)
+                        if rate > best_rate:
+                            best_rate = rate
+                            best_period = period
+                    except:
+                        continue
+            break
+
+    return best_rate, best_period
+
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
