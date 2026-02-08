@@ -1,7 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import re
 from datetime import datetime
+
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
@@ -71,31 +73,21 @@ def extract_icici():
     except:
         return 0, ""
 
+    text = soup.get_text(" ", strip=True)
+
+    # find all percentages like 6.50%
+    matches = re.findall(r"\d+\.\d+%", text)
+
     best_rate = 0
-    best_period = ""
+    for m in matches:
+        rate = float(m.replace("%", ""))
+        if rate > best_rate:
+            best_rate = rate
 
-    for table in soup.find_all("table"):
-        if "interest rate" in table.get_text().lower():
+    # fallback period text (banner doesn’t show exact tenure cleanly)
+    period = "Best advertised tenure"
 
-            for row in table.find_all("tr")[1:]:
-                cols = [c.get_text(strip=True) for c in row.find_all("td")]
-
-                if len(cols) >= 2:
-                    period = cols[0]
-                    rate_text = cols[1].replace("%", "")
-
-                    try:
-                        rate = float(rate_text)
-
-                        if rate > best_rate:
-                            best_rate = rate
-                            best_period = period
-
-                    except:
-                        continue
-            break
-
-    return best_rate, best_period
+    return best_rate, period
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
