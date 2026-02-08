@@ -60,8 +60,9 @@ def extract_hdfc():
 
 
 # ---------- ICICI ----------
-def extract_icici():
-    URL = "https://www.icici.bank.in/personal-banking/deposits/fixed-deposit/fd-interest-rates"
+
+    def extract_icici():
+    URL = "https://www.icicidirect.com/fd-and-bonds/icici-bank-fd"
     try:
         r = requests.get(URL, headers=HEADERS, timeout=30)
         soup = BeautifulSoup(r.text, "lxml")
@@ -72,31 +73,30 @@ def extract_icici():
     best_rate = 0
     best_period = ""
 
-    # search all tables
     for table in soup.find_all("table"):
         text = table.get_text(" ").lower()
 
-        # look for FD table by a key phrase
-        if "less than" in text and "%" in text:
-            # parse rows
+        # check if table looks like the FD rate table
+        if "less than ₹ 3 cr" in text or "general" in text:
             for row in table.find_all("tr")[1:]:
                 cols = [c.get_text(strip=True).replace("%", "") for c in row.find_all("td")]
 
                 if len(cols) >= 2:
-                    period = cols[0]
                     try:
                         rate = float(cols[1])
+                        period = cols[0]
 
                         if rate > best_rate:
                             best_rate = rate
                             best_period = period
+
                     except:
                         continue
-            # stop once we parse the main FD table
+            # break after we parse first FD table
             break
 
     return best_rate, best_period
-
+                   
 
 
 # ---------- RUN ----------
