@@ -1,6 +1,13 @@
 {
-  "last_updated": "2026-02-08 03:45",
+  "last_updated": "2026-02-08 03:57",
   "banks": [
+    {
+      "bank": "ICICI",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "6.50",
+      "rate_general": "7.10%",
+      "rate_senior": "7.60%"
+    },
     {
       "bank": "HDFC",
       "scheme": "Callable FD \u2264 3Cr",
@@ -21,13 +28,6 @@
       "period": "2 years to less than 3 years",
       "rate_general": "6.40%",
       "rate_senior": "6.90%"
-    },
-    {
-      "bank": "ICICI",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "1 year and above but < 5 years",
-      "rate_general": "1.00%",
-      "rate_senior": "1.50%"
     }
   ]
 }
