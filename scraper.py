@@ -60,14 +60,13 @@ def extract_hdfc():
 
 
 # ---------- ICICI ----------
-
-    def extract_icici():
+def extract_icici():
     URL = "https://www.icicidirect.com/fd-and-bonds/icici-bank-fd"
+
     try:
         r = requests.get(URL, headers=HEADERS, timeout=30)
         soup = BeautifulSoup(r.text, "lxml")
-    except Exception as e:
-        print("ICICI fetch failed:", e)
+    except:
         return 0, ""
 
     best_rate = 0
@@ -76,8 +75,7 @@ def extract_hdfc():
     for table in soup.find_all("table"):
         text = table.get_text(" ").lower()
 
-        # check if table looks like the FD rate table
-        if "less than ₹ 3 cr" in text or "general" in text:
+        if "general" in text:
             for row in table.find_all("tr")[1:]:
                 cols = [c.get_text(strip=True).replace("%", "") for c in row.find_all("td")]
 
@@ -89,21 +87,16 @@ def extract_hdfc():
                         if rate > best_rate:
                             best_rate = rate
                             best_period = period
-
                     except:
                         continue
-            # break after we parse first FD table
             break
 
     return best_rate, best_period
-                   
 
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
-
-# ICICI
 icici_rate, icici_period = extract_icici()
 
 banks = [
@@ -111,7 +104,7 @@ banks = [
     {"bank": "HDFC", "period": hdfc_period, "rate": hdfc_rate},
     {"bank": "ICICI", "period": icici_period, "rate": icici_rate},
 
-    # Manual Bank of Baroda entry
+    # Manual Bank of Baroda
     {"bank": "Bank of Baroda", "period": "444 days", "rate": 6.45},
 ]
 
@@ -135,4 +128,4 @@ result = {
 with open("fd_rates.json", "w") as f:
     json.dump(result, f, indent=2)
 
-print("SBI + HDFC + BoB + icici  updated successfully!")
+print("SBI + HDFC + ICICI + BoB updated successfully!")
