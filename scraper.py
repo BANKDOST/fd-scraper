@@ -60,6 +60,8 @@ def extract_hdfc():
 
 
 # ---------- ICICI ----------
+
+# ---------- ICICI ----------
 def extract_icici():
     URL = "https://www.icicidirect.com/fd-and-bonds/icici-bank-fd"
 
@@ -73,26 +75,27 @@ def extract_icici():
     best_period = ""
 
     for table in soup.find_all("table"):
-        text = table.get_text(" ").lower()
+        if "interest rate" in table.get_text().lower():
 
-        if "general" in text:
             for row in table.find_all("tr")[1:]:
-                cols = [c.get_text(strip=True).replace("%", "") for c in row.find_all("td")]
+                cols = [c.get_text(strip=True) for c in row.find_all("td")]
 
                 if len(cols) >= 2:
+                    period = cols[0]
+                    rate_text = cols[1].replace("%", "")
+
                     try:
-                        rate = float(cols[1])
-                        period = cols[0]
+                        rate = float(rate_text)
 
                         if rate > best_rate:
                             best_rate = rate
                             best_period = period
+
                     except:
                         continue
             break
 
     return best_rate, best_period
-
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
