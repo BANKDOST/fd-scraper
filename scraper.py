@@ -65,53 +65,55 @@ def extract_hdfc():
 
 def extract_icici():
     URL = "https://www.icicibank.com/personal-banking/deposits/fixed-deposit/fd-interest-rates"
-    r = requests.get(URL, headers=HEADERS, timeout=30)
-    if r.status_code != 200:
-        print("ICICI failed to load:", r.status_code)
-        return 0, ""
     
+    try:
+        r = requests.get(URL, headers=HEADERS, timeout=30)
+        r.raise_for_status()  # raise exception for bad status codes
+    except requests.RequestException as e:
+        print(f"ICICI request failed: {e}")
+        return 0, ""
+
     soup = BeautifulSoup(r.text, "lxml")
     
     best_rate = 0
     best_period = ""
     
-    # ICICI uses a table with tenures in first column, rates in second (general), third (senior)
-    tables = soup.find_all("table")
-    for table in tables:
-        # Heuristic: look for table that has "3 Cr" or "cr" or "premature withdrawal" or many rows
-        text = table.get_text(" ", strip=True).lower()
-        if "cr" in text or "premature" in text or "tax saver" in text:
+    # Find the relevant FD rates table
+    for table in soup.find_all("table"):
+        text_lower = table.get_text(" ", strip=True).lower()
+        if "premature" in text_lower or "cr" in text_lower or "tax saver" in text_lower:
             rows = table.find_all("tr")
             for row in rows:
-                cells = row.find_all(["td", "th"])
-                if len(cells) < 2:
+                cells = row.find_all("td")
+                if len(cells) < 3:
                     continue
                 
-                period = cells[0].get_text(" ", strip=True)
-                # General citizen rate is usually the second column
-                rate_text = cells[1].get_text(" ", strip=True).replace("%", "").strip()
+                period = cells[0].get_text(strip=True)
+                if not period or "tenure" in period.lower() or "general" in period.lower() or "senior" in period.lower():
+                    continue  # skip header/sub-header rows
                 
-                # Clean up things like "6.50% HIGHEST" → 6.50
-                rate_text = re.sub(r"[^\d.]", "", rate_text)
+                # General citizen rate is in the second column (index 1)
+                rate_text = cells[1].get_text(strip=True)
+                
+                # Clean up: remove %, HIGHEST, extra text → keep only the number
+                rate_clean = re.sub(r"[^0-9.]", "", rate_text)
                 
                 try:
-                    rate = float(rate_text)
-                    if rate > best_rate and rate > 1:  # avoid junk like 0 or headers
+                    rate = float(rate_clean)
+                    if rate > best_rate and rate >= 2:  # realistic filter
                         best_rate = rate
                         best_period = period
                 except ValueError:
                     continue
-            # Once we find a good table, break
+            
+            # Stop after processing the first matching table with valid rates
             if best_rate > 0:
                 break
     
     if best_rate == 0:
-        print("ICICI: No valid rate found in tables")
+        print("ICICI: No valid general citizen rate found in the tables")
     
     return best_rate, best_period
-
-
-           
 
 
 
