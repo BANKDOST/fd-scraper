@@ -63,39 +63,42 @@ def extract_hdfc():
 
 # ---------- ICICI ----------
 
+def parse_rate(text):
+    nums = re.findall(r"\d+\.\d+", text)
+    return max(map(float, nums)) if nums else 0
+
+
 def extract_icici():
     URL = "https://www.icicidirect.com/fd-and-bonds/icici-bank-fd"
-
-    try:
-        r = requests.get(URL, headers=HEADERS, timeout=30)
-        soup = BeautifulSoup(r.text, "lxml")
-    except:
-        return 0, ""
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
 
     best_rate = 0
     best_period = ""
 
     for table in soup.find_all("table"):
-        text = table.get_text().lower()
+        text = table.get_text(" ", strip=True).lower()
 
-        if "fd interest rate for general and senior citizens" in text:
-            for row in table.find_all("tr")[1:]:
-                cols = [c.get_text(strip=True) for c in row.find_all("td")]
+        # find the FD interest table
+        if "general and senior" in text and "interest rate" in text:
+            for row in table.find_all("tr"):
+                cells = row.find_all("td")
+                if len(cells) < 2:
+                    continue
 
-                if len(cols) >= 2:
-                    period = cols[0]
-                    rate_text = cols[1].replace("%", "")
+                period = cells[0].get_text(" ", strip=True)
+                rate_text = cells[1].get_text(" ", strip=True)
 
-                    try:
-                        rate = float(rate_text)
-                        if rate > best_rate:
-                            best_rate = rate
-                            best_period = period
-                    except:
-                        continue
+                rate = parse_rate(rate_text)
+
+                if rate > best_rate:
+                    best_rate = rate
+                    best_period = period
+
             break
 
     return best_rate, best_period
+
 
 
 # ---------- RUN ----------
