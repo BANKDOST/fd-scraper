@@ -78,10 +78,8 @@ def extract_axis():
     in_section = False
 
     for line in lines:
-
         lower = line.lower()
 
-        # start when we reach "Less than ₹ 3 Cr"
         if "less than" in lower and "3 cr" in lower:
             in_section = True
             continue
@@ -89,18 +87,14 @@ def extract_axis():
         if not in_section:
             continue
 
-        # stop when next section starts ("3 cr to less than ₹5 cr")
         if "3 cr to less than" in lower:
             break
 
-        # find decimal rates
         decimals = re.findall(r"\d+\.\d+", line)
 
-        # at least one decimal means row has rates
         if not decimals:
             continue
 
-        # first decimal is general <3Cr
         try:
             general_rate = float(decimals[0])
         except:
@@ -108,24 +102,57 @@ def extract_axis():
 
         if general_rate > best_rate:
             best_rate = general_rate
-            # tenure = text before first decimal
             best_period = line.split(decimals[0])[0].strip()
 
     return best_rate, best_period
 
+
+# ---------- PNB ----------
+def extract_pnb():
+    URL = "https://pnb.bank.in/Interest-Rates-Deposit.html"
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    best_rate = 0
+    best_period = ""
+
+    for table in soup.find_all("table"):
+        text = table.get_text(" ", strip=True).lower()
+
+        # target domestic deposit table <3Cr
+        if "domestic term deposit" not in text or "below rs" not in text:
+            continue
+
+        for row in table.find_all("tr"):
+            cols = [c.get_text(strip=True) for c in row.find_all("td")]
+
+            if len(cols) < 3:
+                continue
+
+            rate = clean_rate(cols[2])  # general column
+            if rate > best_rate:
+                best_rate = rate
+                best_period = cols[1]
+
+        if best_rate > 0:
+            break
+
+    return best_rate, best_period
 
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
 axis_rate, axis_period = extract_axis()
+pnb_rate, pnb_period = extract_pnb()
 
 banks = [
     {"bank": "SBI", "period": sbi_period, "rate": sbi_rate},
     {"bank": "HDFC", "period": hdfc_period, "rate": hdfc_rate},
     {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
+    {"bank": "PNB", "period": pnb_period, "rate": pnb_rate},
 
-    # Manual entries (until scrapers added)
+    # temporary manual banks
     {"bank": "ICICI", "period": "3 Years 1 Day to 5 Years", "rate": 6.5},
     {"bank": "Bank of Baroda", "period": "444 days", "rate": 6.45},
 ]
