@@ -75,30 +75,44 @@ def extract_axis():
         text = pdf.pages[0].extract_text()
 
     lines = text.split("\n")
-
     in_section = False
 
     for line in lines:
-        if "Less than" in line and "3" in line:
+
+        lower = line.lower()
+
+        # start when we reach "Less than ₹ 3 Cr"
+        if "less than" in lower and "3 cr" in lower:
             in_section = True
             continue
 
-        if in_section:
-            nums = re.findall(r"\d+(?:\.\d+)?", line)
+        if not in_section:
+            continue
 
-            if len(nums) < 2:
-                continue
+        # stop when next section starts ("3 cr to less than ₹5 cr")
+        if "3 cr to less than" in lower:
+            break
 
-            try:
-                rate = float(nums[1])  # general column
-            except ValueError:
-                continue
+        # find decimal rates
+        decimals = re.findall(r"\d+\.\d+", line)
 
-            if rate > best_rate:
-                best_rate = rate
-                best_period = line.strip()
+        # at least one decimal means row has rates
+        if not decimals:
+            continue
+
+        # first decimal is general <3Cr
+        try:
+            general_rate = float(decimals[0])
+        except:
+            continue
+
+        if general_rate > best_rate:
+            best_rate = general_rate
+            # tenure = text before first decimal
+            best_period = line.split(decimals[0])[0].strip()
 
     return best_rate, best_period
+
 
 
 # ---------- RUN ----------
