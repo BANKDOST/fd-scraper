@@ -64,13 +64,12 @@ def extract_hdfc():
 # ---------- AXIS (PDF scrape) ----------
 
 def extract_axis():
-    PDF_URL = "https://www.axisbank.com/docs/default-source/deposits/domestic-term-deposit-rates.pdf"
+    PDF_URL = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-11-february-26.pdf?sfvrsn=682bbb63_1"
 
     headers = {
         "User-Agent": "Mozilla/5.0",
         "Accept": "application/pdf"
     }
-
     r = requests.get(PDF_URL, headers=headers, timeout=30)
 
     if "application/pdf" not in r.headers.get("Content-Type", ""):
@@ -86,41 +85,43 @@ def extract_axis():
         text = pdf.pages[0].extract_text()
 
     lines = text.split("\n")
-
     reading = False
 
     for line in lines:
+        lower = line.lower()
 
-        # start after correct section header
-        if "less than ₹ 3" in line.lower() or "less than 3" in line.lower():
+        if "less than ₹ 3 cr" in lower or "less than 3 cr" in lower:
             reading = True
             continue
 
-        # stop when next section begins
-        if reading and ("above ₹" in line.lower() or "more than" in line.lower()):
+        if reading and ("less than ₹ 3 cr" not in lower and len(line.strip()) == 0):
+            # skip blank lines in section
+            continue
+
+        # stop when second section begins ("₹ 3 cr to less than ₹ 5 cr")
+        if reading and ("3 cr to less than" in lower):
             break
 
         if not reading:
             continue
 
-        # find ALL % in line
-        matches = re.findall(r"\d+(\.\d+)?", line)
-        percents = re.findall(r"\d+\.\d+|\d+", line)
-
-        if len(percents) < 1:
+        parts = line.split()
+        # check at least 3 numeric fields (tenure + general + senior)
+        nums = re.findall(r"\d+(\.\d+)?", line)
+        if len(nums) < 2:
             continue
 
-        # FIRST % is general column
-        rate = float(percents[0])
-
-        # tenure = text before first %
-        period = line.split(percents[0])[0].strip()
+        # first number is part of tenure, second is GENERAL rate
+        rate = float(nums[1])
 
         if rate > best_rate:
+            # tenure text is before the first numeric rate
+            tenure = line.split(nums[1])[0].strip()
             best_rate = rate
-            best_period = period
+            best_period = tenure
 
     return best_rate, best_period
+
 
             
 
