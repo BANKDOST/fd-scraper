@@ -63,7 +63,7 @@ def extract_hdfc():
 
 # ---------- AXIS (PDF scrape) ----------
 def extract_axis():
-    PDF_URL = "https://www.axisbank.com/docs/default-source/deposits/domestic-term-deposit-rates.pdf"
+    PDF_URL = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-11-february-26.pdf?sfvrsn=682bbb63_1"
 
     r = requests.get(PDF_URL)
     pdf_file = io.BytesIO(r.content)
