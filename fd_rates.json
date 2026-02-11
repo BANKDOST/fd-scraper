@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-11 16:12",
+  "last_updated": "2026-02-11 16:39",
   "banks": [
     {
       "bank": "SBI",
@@ -28,6 +28,13 @@
       "period": "444 days",
       "rate_general": "6.45%",
       "rate_senior": "6.95%"
+    },
+    {
+      "bank": "Axis Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "",
+      "rate_general": "0.00%",
+      "rate_senior": "0.50%"
     }
   ]
 }
