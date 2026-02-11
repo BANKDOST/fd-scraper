@@ -1,7 +1,9 @@
 import requests
 from bs4 import BeautifulSoup
+import pdfplumber
 import json
 import re
+import io
 from datetime import datetime
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
@@ -59,13 +61,60 @@ def extract_hdfc():
     return best_rate, best_period
 
 
+# ---------- AXIS (PDF scrape) ----------
+def extract_axis():
+    PDF_URL = "https://www.axisbank.com/docs/default-source/deposits/domestic-term-deposit-rates.pdf"
+
+    r = requests.get(PDF_URL)
+    pdf_file = io.BytesIO(r.content)
+
+    best_rate = 0
+    best_period = ""
+
+    with pdfplumber.open(pdf_file) as pdf:
+        page = pdf.pages[0]  # first page only
+        tables = page.extract_tables()
+
+        for table in tables:
+            header = table[0]
+
+            target_col = None
+            for i, col in enumerate(header):
+                if col and "less than" in col.lower():
+                    target_col = i
+                    break
+
+            if target_col is None:
+                continue
+
+            for row in table[1:]:
+                if not row or len(row) <= target_col:
+                    continue
+
+                tenure = row[0]
+                rate_text = row[target_col]
+
+                if not tenure or not rate_text:
+                    continue
+
+                rate = clean_rate(rate_text)
+
+                if rate > best_rate:
+                    best_rate = rate
+                    best_period = tenure
+
+    return best_rate, best_period
+
+
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
+axis_rate, axis_period = extract_axis()
 
 banks = [
     {"bank": "SBI", "period": sbi_period, "rate": sbi_rate},
     {"bank": "HDFC", "period": hdfc_period, "rate": hdfc_rate},
+    {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
 
     # Manual ICICI
     {"bank": "ICICI", "period": "3 Years 1 Day to 5 Years", "rate": 6.5},
