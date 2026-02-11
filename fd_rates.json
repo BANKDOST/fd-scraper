@@ -1,6 +1,20 @@
 {
-  "last_updated": "2026-02-10 20:06",
+  "last_updated": "2026-02-11 16:12",
   "banks": [
+    {
+      "bank": "SBI",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "2 Years",
+      "rate_general": "6.80%",
+      "rate_senior": "7.30%"
+    },
+    {
+      "bank": "ICICI",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "3 Years 1 Day to 5 Years",
+      "rate_general": "6.50%",
+      "rate_senior": "7.00%"
+    },
     {
       "bank": "HDFC",
       "scheme": "Callable FD \u2264 3Cr",
@@ -14,20 +28,6 @@
       "period": "444 days",
       "rate_general": "6.45%",
       "rate_senior": "6.95%"
-    },
-    {
-      "bank": "SBI",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "2 years to less than 3 years",
-      "rate_general": "6.40%",
-      "rate_senior": "6.90%"
-    },
-    {
-      "bank": "ICICI",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "",
-      "rate_general": "0.00%",
-      "rate_senior": "0.50%"
     }
   ]
 }
