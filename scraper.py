@@ -1,8 +1,8 @@
 import requests
 from bs4 import BeautifulSoup
-import pdfplumber
 import json
 import re
+import pdfplumber
 import io
 from datetime import datetime
 
@@ -11,7 +11,7 @@ HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 # ---------- Helper ----------
 def clean_rate(text):
-    match = re.search(r"\d+(\.\d+)?", text)
+    match = re.search(r"\d+(?:\.\d+)?", text)
     return float(match.group()) if match else 0
 
 
@@ -61,21 +61,11 @@ def extract_hdfc():
     return best_rate, best_period
 
 
-# ---------- AXIS (PDF scrape) ----------
-
+# ---------- AXIS (PDF parsing) ----------
 def extract_axis():
-    PDF_URL = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-11-february-26.pdf?sfvrsn=682bbb63_1"
+    PDF_URL = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-11-february-26.pdf"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0",
-        "Accept": "application/pdf"
-    }
-    r = requests.get(PDF_URL, headers=headers, timeout=30)
-
-    if "application/pdf" not in r.headers.get("Content-Type", ""):
-        print("Axis PDF download failed")
-        return 0, ""
-
+    r = requests.get(PDF_URL, headers=HEADERS, timeout=30)
     pdf_file = io.BytesIO(r.content)
 
     best_rate = 0
@@ -85,45 +75,30 @@ def extract_axis():
         text = pdf.pages[0].extract_text()
 
     lines = text.split("\n")
-    reading = False
+
+    in_section = False
 
     for line in lines:
-        lower = line.lower()
-
-        if "less than ₹ 3 cr" in lower or "less than 3 cr" in lower:
-            reading = True
+        if "Less than" in line and "3" in line:
+            in_section = True
             continue
 
-        if reading and ("less than ₹ 3 cr" not in lower and len(line.strip()) == 0):
-            # skip blank lines in section
-            continue
+        if in_section:
+            nums = re.findall(r"\d+(?:\.\d+)?", line)
 
-        # stop when second section begins ("₹ 3 cr to less than ₹ 5 cr")
-        if reading and ("3 cr to less than" in lower):
-            break
+            if len(nums) < 2:
+                continue
 
-        if not reading:
-            continue
+            try:
+                rate = float(nums[1])  # general column
+            except ValueError:
+                continue
 
-        parts = line.split()
-        # check at least 3 numeric fields (tenure + general + senior)
-        nums = re.findall(r"\d+(\.\d+)?", line)
-        if len(nums) < 2:
-            continue
-
-        # first number is part of tenure, second is GENERAL rate
-        rate = float(nums[1])
-
-        if rate > best_rate:
-            # tenure text is before the first numeric rate
-            tenure = line.split(nums[1])[0].strip()
-            best_rate = rate
-            best_period = tenure
+            if rate > best_rate:
+                best_rate = rate
+                best_period = line.strip()
 
     return best_rate, best_period
-
-
-            
 
 
 # ---------- RUN ----------
@@ -136,10 +111,8 @@ banks = [
     {"bank": "HDFC", "period": hdfc_period, "rate": hdfc_rate},
     {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
 
-    # Manual ICICI
+    # Manual entries (until scrapers added)
     {"bank": "ICICI", "period": "3 Years 1 Day to 5 Years", "rate": 6.5},
-
-    # Manual Bank of Baroda
     {"bank": "Bank of Baroda", "period": "444 days", "rate": 6.45},
 ]
 
