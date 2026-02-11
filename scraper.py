@@ -62,48 +62,67 @@ def extract_hdfc():
 
 
 # ---------- AXIS (PDF scrape) ----------
-def extract_axis():
-    PDF_URL = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-11-february-26.pdf?sfvrsn=682bbb63_1"
 
-    r = requests.get(PDF_URL)
+def extract_axis():
+    PDF_URL = "https://www.axisbank.com/docs/default-source/deposits/domestic-term-deposit-rates.pdf"
+
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Accept": "application/pdf"
+    }
+
+    r = requests.get(PDF_URL, headers=headers, timeout=30)
+
+    if "application/pdf" not in r.headers.get("Content-Type", ""):
+        print("Axis PDF download failed")
+        return 0, ""
+
     pdf_file = io.BytesIO(r.content)
 
     best_rate = 0
     best_period = ""
 
     with pdfplumber.open(pdf_file) as pdf:
-        page = pdf.pages[0]  # first page only
-        tables = page.extract_tables()
+        text = pdf.pages[0].extract_text()
 
-        for table in tables:
-            header = table[0]
+    lines = text.split("\n")
 
-            target_col = None
-            for i, col in enumerate(header):
-                if col and "less than" in col.lower():
-                    target_col = i
-                    break
+    reading = False
 
-            if target_col is None:
-                continue
+    for line in lines:
 
-            for row in table[1:]:
-                if not row or len(row) <= target_col:
-                    continue
+        # start after correct section header
+        if "less than ₹ 3" in line.lower() or "less than 3" in line.lower():
+            reading = True
+            continue
 
-                tenure = row[0]
-                rate_text = row[target_col]
+        # stop when next section begins
+        if reading and ("above ₹" in line.lower() or "more than" in line.lower()):
+            break
 
-                if not tenure or not rate_text:
-                    continue
+        if not reading:
+            continue
 
-                rate = clean_rate(rate_text)
+        # find ALL % in line
+        matches = re.findall(r"\d+(\.\d+)?", line)
+        percents = re.findall(r"\d+\.\d+|\d+", line)
 
-                if rate > best_rate:
-                    best_rate = rate
-                    best_period = tenure
+        if len(percents) < 1:
+            continue
+
+        # FIRST % is general column
+        rate = float(percents[0])
+
+        # tenure = text before first %
+        period = line.split(percents[0])[0].strip()
+
+        if rate > best_rate:
+            best_rate = rate
+            best_period = period
 
     return best_rate, best_period
+
+            
 
 
 # ---------- RUN ----------
