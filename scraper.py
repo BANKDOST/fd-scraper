@@ -5,6 +5,7 @@ import re
 import pdfplumber
 import io
 from datetime import datetime
+import time
 
 # selenium
 from selenium import webdriver
@@ -12,7 +13,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from webdriver_manager.chrome import ChromeDriverManager
-import time
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
@@ -115,22 +115,24 @@ def extract_axis():
     return best_rate, best_period
 
 
-# ---------- PNB (Selenium) ----------
+# ---------- PNB (Selenium JS scraping) ----------
 def extract_pnb():
     options = Options()
-    options.add_argument("--headless")
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--window-size=1920,1080")
 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
     driver.get("https://pnb.bank.in/Interest-Rates-Deposit.html")
-    time.sleep(3)
+    time.sleep(4)
 
     # click Domestic/NRO tab
     tab = driver.find_element(By.XPATH, "//*[contains(text(),'Domestic/NRO')]")
     tab.click()
-    time.sleep(2)
+    time.sleep(3)
 
     rows = driver.find_elements(By.XPATH, "//table[1]//tr")
 
