@@ -104,7 +104,7 @@ def extract_axis():
     return best_rate, best_period
 
 
-# ---------- PNB (HTML parsing, no Selenium) ----------
+# ---------- PNB ----------
 def extract_pnb():
     URL = "https://www.pnb.bank.in/Interest-Rates-Deposit.html"
     r = requests.get(URL, headers=HEADERS, timeout=30)
@@ -120,7 +120,7 @@ def extract_pnb():
     table = section.find("table", class_="inner-page-table")
     rows = table.find_all("tr")
 
-    for row in rows[2:]:  # skip headers
+    for row in rows[2:]:
         cols = row.find_all("td")
         if len(cols) < 3:
             continue
@@ -135,17 +135,52 @@ def extract_pnb():
     return best_rate, best_period
 
 
+# ---------- IDFC First Bank (PDF table parsing) ----------
+def extract_idfc():
+    PDF_URL = "https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/interest-rate/Interest-Rates-on-Retail-Deposits-4th-November-2025.pdf"
+
+    r = requests.get(PDF_URL, headers=HEADERS, timeout=30)
+    pdf_file = io.BytesIO(r.content)
+
+    best_rate = 0
+    best_period = ""
+
+    with pdfplumber.open(pdf_file) as pdf:
+        page = pdf.pages[0]
+        table = page.extract_table()
+
+    if not table:
+        return 0, ""
+
+    for row in table:
+        if len(row) < 2:
+            continue
+
+        period = str(row[0]).strip()
+        rate_text = str(row[1]).strip()
+
+        rate = clean_rate(rate_text)
+
+        if rate > best_rate:
+            best_rate = rate
+            best_period = period
+
+    return best_rate, best_period
+
+
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
 axis_rate, axis_period = extract_axis()
 pnb_rate, pnb_period = extract_pnb()
+idfc_rate, idfc_period = extract_idfc()
 
 banks = [
     {"bank": "SBI", "period": sbi_period, "rate": sbi_rate},
     {"bank": "HDFC", "period": hdfc_period, "rate": hdfc_rate},
     {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
     {"bank": "PNB", "period": pnb_period, "rate": pnb_rate},
+    {"bank": "IDFC First", "period": idfc_period, "rate": idfc_rate},
     {"bank": "ICICI", "period": "3 Years 1 Day to 5 Years", "rate": 6.5},
     {"bank": "Bank of Baroda", "period": "444 days", "rate": 6.45},
 ]
