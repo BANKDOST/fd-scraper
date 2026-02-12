@@ -140,11 +140,13 @@ def extract_pnb():
 
     # 2️⃣ Wait for Domestic Term Deposit panel to load
     panel = wait.until(
-        EC.visibility_of_element_located((By.CSS_SELECTOR, "div.fdm-tab"))  # adjust based on current site
+        EC.visibility_of_element_located((By.XPATH, "//div[contains(@id,'domestic-deposit')]"))
     )
 
-    # 3️⃣ Click ≤3 Crore option (first item in the list)
-    below3 = panel.find_element(By.XPATH, ".//li[1]//a")
+    # 3️⃣ Click "Below Rs. 3 Crore" option by exact text
+    below3 = panel.find_element(
+        By.XPATH, ".//a[contains(text(),'Below Rs. 3 Crore')]"
+    )
     driver.execute_script("arguments[0].click();", below3)
 
     # 4️⃣ Wait for table rows
