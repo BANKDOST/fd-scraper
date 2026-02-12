@@ -118,7 +118,7 @@ def extract_axis():
 # ---------- PNB (Selenium JS scraping) ----------
 def extract_pnb():
     options = Options()
-    options.add_argument("--headless=new")
+    options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--disable-gpu")
@@ -127,11 +127,20 @@ def extract_pnb():
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
     driver.get("https://pnb.bank.in/Interest-Rates-Deposit.html")
-    time.sleep(4)
 
-    # click Domestic/NRO tab
-    tab = driver.find_element(By.XPATH, "//*[contains(text(),'Domestic/NRO')]")
-    tab.click()
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+
+    wait = WebDriverWait(driver, 15)
+
+    tab = wait.until(
+        EC.presence_of_element_located((By.XPATH, "//*[contains(text(),'Domestic/NRO')]"))
+    )
+
+    driver.execute_script("arguments[0].scrollIntoView(true);", tab)
+    time.sleep(1)
+    driver.execute_script("arguments[0].click();", tab)
+
     time.sleep(3)
 
     rows = driver.find_elements(By.XPATH, "//table[1]//tr")
@@ -156,8 +165,6 @@ def extract_pnb():
 
     driver.quit()
     return best_rate, best_period
-
-
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
