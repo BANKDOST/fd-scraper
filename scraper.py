@@ -5,14 +5,6 @@ import re
 import pdfplumber
 import io
 from datetime import datetime
-import time
-
-# selenium
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-from webdriver_manager.chrome import ChromeDriverManager
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
@@ -69,7 +61,7 @@ def extract_hdfc():
     return best_rate, best_period
 
 
-# ---------- AXIS (PDF parsing) ----------
+# ---------- Axis (PDF parsing) ----------
 def extract_axis():
     PDF_URL = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-11-february-26.pdf"
 
@@ -103,72 +95,43 @@ def extract_axis():
         if not decimals:
             continue
 
-        try:
-            general_rate = float(decimals[0])
-        except:
-            continue
+        rate = float(decimals[0])
 
-        if general_rate > best_rate:
-            best_rate = general_rate
+        if rate > best_rate:
+            best_rate = rate
             best_period = line.split(decimals[0])[0].strip()
 
     return best_rate, best_period
 
 
-# ---------- PNB (Selenium JS scraping) ----------
-
+# ---------- PNB (HTML parsing, no Selenium) ----------
 def extract_pnb():
-    options = Options()
-    options.add_argument("--headless=new")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--window-size=1920,1080")
-
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
-    driver.get("https://www.pnb.bank.in/Interest-Rates-Deposit.html")
-
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
-
-    wait = WebDriverWait(driver, 30)
-
-    # 1️⃣ Click Domestic Term Deposit tab
-    domestic_tab = wait.until(
-        EC.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Domestic Term Deposit')]"))
-    )
-    driver.execute_script("arguments[0].click();", domestic_tab)
-
-    # 2️⃣ Wait for Domestic Term Deposit panel to load
-    panel = wait.until(
-        EC.visibility_of_element_located((By.XPATH, "//div[contains(@id,'domestic-deposit')]"))
-    )
-
-    # 3️⃣ Click "Below Rs. 3 Crore" option by exact text
-    below3 = panel.find_element(
-        By.XPATH, ".//a[contains(text(),'Below Rs.3 Crore')]"
-    )
-    driver.execute_script("arguments[0].click();", below3)
-
-    # 4️⃣ Wait for table rows
-    rows = wait.until(
-        EC.presence_of_all_elements_located((By.XPATH, "//div[contains(@id,'domestic-deposit')]//table//tr"))
-    )
+    URL = "https://www.pnb.bank.in/Interest-Rates-Deposit.html"
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
 
     best_rate = 0
     best_period = ""
 
-    for row in rows[1:]:  # skip header
-        cols = row.find_elements(By.TAG_NAME, "td")
+    section = soup.find("div", id="fa-tab132")
+    if not section:
+        return 0, ""
+
+    table = section.find("table", class_="inner-page-table")
+    rows = table.find_all("tr")
+
+    for row in rows[2:]:  # skip headers
+        cols = row.find_all("td")
         if len(cols) < 3:
             continue
-        tenure = cols[0].text.strip()
-        rate_text = cols[2].text.strip()
-        rate = clean_rate(rate_text)
+
+        period = cols[1].get_text(strip=True)
+        rate = clean_rate(cols[2].get_text(strip=True))
+
         if rate > best_rate:
             best_rate = rate
-            best_period = tenure
+            best_period = period
 
-    driver.quit()
     return best_rate, best_period
 
 
