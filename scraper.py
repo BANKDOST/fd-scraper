@@ -145,7 +145,7 @@ def extract_pnb():
 
     # 3️⃣ Click "Below Rs. 3 Crore" option by exact text
     below3 = panel.find_element(
-        By.XPATH, ".//a[contains(text(),'Below Rs. 3 Crore')]"
+        By.XPATH, ".//a[contains(text(),'Below Rs.3 Crore')]"
     )
     driver.execute_script("arguments[0].click();", below3)
 
