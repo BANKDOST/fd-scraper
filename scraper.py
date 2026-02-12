@@ -141,9 +141,8 @@ def extract_pnb():
     below3 = wait.until(
     EC.element_to_be_clickable((By.XPATH, "//*[contains(text(),'3 Crore')]"))
 )
-driver.execute_script("arguments[0].click();", below3)
+driver.execute_script("arguments[0].click();", below3)  # ✅ aligned with above
 
-    driver.execute_script("arguments[0].click();", below3)
 
     # wait for FD table rows
     rows = wait.until(
