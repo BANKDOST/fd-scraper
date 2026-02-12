@@ -116,55 +116,80 @@ def extract_axis():
 
 
 # ---------- PNB (Selenium JS scraping) ----------
-def extract_pnb():
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--disable-gpu")
-    options.add_argument("--window-size=1920,1080")
+import requests
+from bs4 import BeautifulSoup
+import re
+import json
+from datetime import datetime
 
-    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+HEADERS = {"User-Agent": "Mozilla/5.0"}
 
-    driver.get("https://pnb.bank.in/Interest-Rates-Deposit.html")
+def clean_rate(text):
+    """Extract float rate from string"""
+    match = re.search(r"\d+(?:\.\d+)?", text)
+    return float(match.group()) if match else 0.0
 
-    from selenium.webdriver.support.ui import WebDriverWait
-    from selenium.webdriver.support import expected_conditions as EC
+def extract_pnb_domestic_fd():
+    url = "https://www.pnb.bank.in/Interest-Rates-Deposit.html"
+    r = requests.get(url, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
 
-    wait = WebDriverWait(driver, 15)
+    # Find the table for Domestic/NRO $ Fixed Deposit Scheme
+    table = None
+    for t in soup.find_all("table"):
+        heading = t.find_previous("h3")
+        if heading and "Domestic/NRO" in heading.get_text(strip=True):
+            table = t
+            break
 
-    tab = wait.until(
-        EC.presence_of_element_located((By.XPATH, "//*[contains(text(),'Domestic/NRO')]"))
-    )
-
-    driver.execute_script("arguments[0].scrollIntoView(true);", tab)
-    time.sleep(1)
-    driver.execute_script("arguments[0].click();", tab)
-
-    time.sleep(3)
-
-    rows = driver.find_elements(By.XPATH, "//table[1]//tr")
+    if not table:
+        return 0, ""  # fallback if table not found
 
     best_rate = 0
-    best_period = ""
+    best_tenure = ""
 
-    for row in rows:
-        cols = row.find_elements(By.TAG_NAME, "td")
-
+    for row in table.find_all("tr")[1:]:  # skip header
+        cols = row.find_all("td")
         if len(cols) < 3:
             continue
-
-        tenure = cols[0].text.strip()
-        rate_text = cols[2].text.strip()
-
+        tenure = cols[0].get_text(strip=True)
+        rate_text = cols[2].get_text(strip=True)
         rate = clean_rate(rate_text)
-
         if rate > best_rate:
             best_rate = rate
-            best_period = tenure
+            best_tenure = tenure
 
-    driver.quit()
-    return best_rate, best_period
+    return best_rate, best_tenure
+
+# ---------- RUN ----------
+pnb_rate, pnb_period = extract_pnb_domestic_fd()
+
+banks = [
+    {"bank": "PNB", "period": pnb_period, "rate": pnb_rate},
+]
+
+# Format JSON output
+output = []
+for b in banks:
+    output.append({
+        "bank": b["bank"],
+        "scheme": "Callable FD ≤ 3Cr",
+        "period": b["period"],
+        "rate_general": f'{b["rate"]:.2f}%',
+        "rate_senior": f'{b["rate"] + 0.5:.2f}%'
+    })
+
+result = {
+    "last_updated": datetime.now().strftime("%Y-%m-%d %H:%M"),
+    "banks": output
+}
+
+with open("pnb_fd_rates.json", "w") as f:
+    json.dump(result, f, indent=2)
+
+print("PNB Domestic Term Deposit FD rates updated successfully!")
+print(json.dumps(result, indent=2))
+
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
