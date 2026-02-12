@@ -62,46 +62,57 @@ def extract_hdfc():
 
 
 # ---------- Axis (PDF parsing) ----------
+
 def extract_axis():
-    PDF_URL = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-11-february-26.pdf"
+    pdf_url = "https://www.axisbank.com/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits.pdf"
 
-    r = requests.get(PDF_URL, headers=HEADERS, timeout=30)
-    pdf_file = io.BytesIO(r.content)
+    try:
+        r = requests.get(pdf_url, headers=HEADERS, timeout=30, allow_redirects=True)
 
-    best_rate = 0
-    best_period = ""
+        if r.status_code != 200:
+            print("Axis PDF not reachable, skipping...")
+            return 0, ""
 
-    with pdfplumber.open(pdf_file) as pdf:
-        text = pdf.pages[0].extract_text()
+        pdf_file = io.BytesIO(r.content)
 
-    lines = text.split("\n")
-    in_section = False
+        best_rate = 0
+        best_period = ""
 
-    for line in lines:
-        lower = line.lower()
+        with pdfplumber.open(pdf_file) as pdf:
+            text = pdf.pages[0].extract_text()
 
-        if "less than" in lower and "3 cr" in lower:
-            in_section = True
-            continue
+        lines = text.split("\n")
+        in_section = False
 
-        if not in_section:
-            continue
+        for line in lines:
+            lower = line.lower()
 
-        if "3 cr to less than" in lower:
-            break
+            if "less than" in lower and "3 cr" in lower:
+                in_section = True
+                continue
 
-        decimals = re.findall(r"\d+\.\d+", line)
+            if not in_section:
+                continue
 
-        if not decimals:
-            continue
+            if "3 cr to less than" in lower:
+                break
 
-        rate = float(decimals[0])
+            decimals = re.findall(r"\d+\.\d+", line)
+            if not decimals:
+                continue
 
-        if rate > best_rate:
-            best_rate = rate
-            best_period = line.split(decimals[0])[0].strip()
+            rate = float(decimals[0])
 
-    return best_rate, best_period
+            if rate > best_rate:
+                best_rate = rate
+                best_period = line.split(decimals[0])[0].strip()
+
+        return best_rate, best_period
+
+    except Exception as e:
+        print("Axis scraping failed:", e)
+        return 0, ""
+
 
 
 # ---------- PNB (HTML parsing, no Selenium) ----------
