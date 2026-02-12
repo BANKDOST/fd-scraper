@@ -2,7 +2,7 @@ name: FD Rate Scraper
 
 on:
   schedule:
-    - cron: "30 19 * * *"   # 1 AM IST daily
+    - cron: "30 19 * * *"
   workflow_dispatch:
 
 permissions:
@@ -21,8 +21,18 @@ jobs:
         with:
           python-version: "3.11"
 
+      # ✅ install Chrome for Selenium
+      - name: Install Chrome
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y wget unzip
+          wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+          sudo apt install -y ./google-chrome-stable_current_amd64.deb
+
+      # ✅ install python packages
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install requests beautifulsoup4 pdfplumber selenium webdriver-manager lxml
 
       - name: Run scraper
         run: python scraper.py
