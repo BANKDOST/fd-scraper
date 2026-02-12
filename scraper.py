@@ -119,7 +119,7 @@ def extract_axis():
 
 def extract_pnb():
     options = Options()
-    options.add_argument("--headless")
+    options.add_argument("--headless=new")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1920,1080")
@@ -130,43 +130,45 @@ def extract_pnb():
     from selenium.webdriver.support.ui import WebDriverWait
     from selenium.webdriver.support import expected_conditions as EC
 
-    wait = WebDriverWait(driver, 20)
+    wait = WebDriverWait(driver, 30)
 
-    # click Domestic Term Deposit
-    domestic = wait.until(
+    # 1️⃣ Click Domestic Term Deposit tab
+    domestic_tab = wait.until(
         EC.element_to_be_clickable((By.XPATH, "//*[contains(text(),'Domestic Term Deposit')]"))
     )
-    driver.execute_script("arguments[0].click();", domestic)
+    driver.execute_script("arguments[0].click();", domestic_tab)
 
-    # click ≤ 3 Crore option
-    below3 = wait.until(
-        EC.element_to_be_clickable((By.XPATH, "//*[contains(text(),'3 Crore')]"))
+    # 2️⃣ Wait for Domestic Term Deposit panel to load
+    panel = wait.until(
+        EC.visibility_of_element_located((By.CSS_SELECTOR, "div.fdm-tab"))  # adjust based on current site
     )
-    driver.execute_script("arguments[0].click();", below3)  # ✅ this line must be indented 4 spaces
 
-    # wait for FD table rows
+    # 3️⃣ Click ≤3 Crore option (first item in the list)
+    below3 = panel.find_element(By.XPATH, ".//li[1]//a")
+    driver.execute_script("arguments[0].click();", below3)
+
+    # 4️⃣ Wait for table rows
     rows = wait.until(
-        EC.presence_of_all_elements_located((By.XPATH, "//table//tr"))
+        EC.presence_of_all_elements_located((By.XPATH, "//div[contains(@id,'domestic-deposit')]//table//tr"))
     )
 
     best_rate = 0
     best_period = ""
 
-    for row in rows:
+    for row in rows[1:]:  # skip header
         cols = row.find_elements(By.TAG_NAME, "td")
         if len(cols) < 3:
             continue
-
         tenure = cols[0].text.strip()
         rate_text = cols[2].text.strip()
         rate = clean_rate(rate_text)
-
         if rate > best_rate:
             best_rate = rate
             best_period = tenure
 
     driver.quit()
     return best_rate, best_period
+
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
