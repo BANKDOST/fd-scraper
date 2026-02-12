@@ -6,6 +6,14 @@ import pdfplumber
 import io
 from datetime import datetime
 
+# selenium
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.chrome.options import Options
+from webdriver_manager.chrome import ChromeDriverManager
+import time
+
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
 
@@ -107,36 +115,44 @@ def extract_axis():
     return best_rate, best_period
 
 
-# ---------- PNB ----------
+# ---------- PNB (Selenium) ----------
 def extract_pnb():
-    URL = "https://pnb.bank.in/Interest-Rates-Deposit.html"
-    r = requests.get(URL, headers=HEADERS, timeout=30)
-    soup = BeautifulSoup(r.text, "lxml")
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+
+    driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+
+    driver.get("https://pnb.bank.in/Interest-Rates-Deposit.html")
+    time.sleep(3)
+
+    # click Domestic/NRO tab
+    tab = driver.find_element(By.XPATH, "//*[contains(text(),'Domestic/NRO')]")
+    tab.click()
+    time.sleep(2)
+
+    rows = driver.find_elements(By.XPATH, "//table[1]//tr")
 
     best_rate = 0
     best_period = ""
 
-    for table in soup.find_all("table"):
-        text = table.get_text(" ", strip=True).lower()
+    for row in rows:
+        cols = row.find_elements(By.TAG_NAME, "td")
 
-        # target domestic deposit table <3Cr
-        if "domestic term deposit" not in text or "below rs" not in text:
+        if len(cols) < 3:
             continue
 
-        for row in table.find_all("tr"):
-            cols = [c.get_text(strip=True) for c in row.find_all("td")]
+        tenure = cols[0].text.strip()
+        rate_text = cols[2].text.strip()
 
-            if len(cols) < 3:
-                continue
+        rate = clean_rate(rate_text)
 
-            rate = clean_rate(cols[2])  # general column
-            if rate > best_rate:
-                best_rate = rate
-                best_period = cols[1]
+        if rate > best_rate:
+            best_rate = rate
+            best_period = tenure
 
-        if best_rate > 0:
-            break
-
+    driver.quit()
     return best_rate, best_period
 
 
@@ -151,8 +167,6 @@ banks = [
     {"bank": "HDFC", "period": hdfc_period, "rate": hdfc_rate},
     {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
     {"bank": "PNB", "period": pnb_period, "rate": pnb_rate},
-
-    # temporary manual banks
     {"bank": "ICICI", "period": "3 Years 1 Day to 5 Years", "rate": 6.5},
     {"bank": "Bank of Baroda", "period": "444 days", "rate": 6.45},
 ]
