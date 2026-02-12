@@ -116,6 +116,7 @@ def extract_axis():
 
 
 # ---------- PNB (Selenium JS scraping) ----------
+
 def extract_pnb():
     options = Options()
     options.add_argument("--headless")
@@ -137,12 +138,11 @@ def extract_pnb():
     )
     driver.execute_script("arguments[0].click();", domestic)
 
-    # click ≤ 3 Cr option
+    # click ≤ 3 Crore option
     below3 = wait.until(
-    EC.element_to_be_clickable((By.XPATH, "//*[contains(text(),'3 Crore')]"))
-)
-driver.execute_script("arguments[0].click();", below3)  # ✅ aligned with above
-
+        EC.element_to_be_clickable((By.XPATH, "//*[contains(text(),'3 Crore')]"))
+    )
+    driver.execute_script("arguments[0].click();", below3)  # ✅ this line must be indented 4 spaces
 
     # wait for FD table rows
     rows = wait.until(
