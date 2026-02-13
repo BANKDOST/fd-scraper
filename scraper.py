@@ -250,6 +250,49 @@ def extract_indianbank():
 
     return best_rate, best_period
 
+# ---------- IDFC FIRST Bank (PDF multi-table parsing) ----------
+def extract_idfcfirst():
+    pdf_url = "https://www.idfcfirst.bank.in/content/dam/idfcfirstbank/interest-rate/Interest-Rates-on-Retail-Deposits-4th-November-2025.pdf"
+
+    try:
+        r = requests.get(pdf_url, headers=HEADERS, timeout=30)
+        if r.status_code != 200:
+            return 0, ""
+
+        pdf_file = io.BytesIO(r.content)
+
+        best_rate = 0
+        best_period = ""
+
+        with pdfplumber.open(pdf_file) as pdf:
+            page = pdf.pages[0]
+            tables = page.extract_tables()
+
+        if not tables:
+            return 0, ""
+
+        # loop through ALL tables on page 1
+        for table in tables:
+            for row in table:
+                if not row or len(row) < 2:
+                    continue
+
+                period = str(row[0]).strip()
+                rate_text = str(row[1]).strip()
+
+                rate = clean_rate(rate_text)
+
+                if rate > best_rate:
+                    best_rate = rate
+                    best_period = period
+
+        return best_rate, best_period
+
+    except Exception as e:
+        print("IDFC scraping failed:", e)
+        return 0, ""
+
+
 
 
 
@@ -261,6 +304,8 @@ pnb_rate, pnb_period = extract_pnb()
 canara_rate, canara_period = extract_canara()
 union_rate, union_period = extract_union()
 indianbank_rate, indianbank_period = extract_indianbank()
+idfc_rate, idfc_period = extract_idfcfirst()
+
 
 
 
@@ -274,6 +319,7 @@ banks = [
     {"bank": "Bank of Baroda", "period": "444 days", "rate": 6.45},
     {"bank": "Union Bank", "period": union_period, "rate": union_rate},
     {"bank": "Indian Bank", "period": indianbank_period, "rate": indianbank_rate},
+    {"bank": "IDFC FIRST Bank", "period": idfc_period, "rate": idfc_rate},
 ]
 
 banks.sort(key=lambda x: x["rate"], reverse=True)
