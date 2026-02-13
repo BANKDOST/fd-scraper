@@ -63,57 +63,47 @@ def extract_hdfc():
 
 # ---------- Axis (PDF parsing) ----------
 def extract_axis():
-    pdf_url = "https://www.axisbank.com/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits.pdf"
+    url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-12-february-26.pdf"
 
-    try:
-        r = requests.get(pdf_url, headers=HEADERS, timeout=30, allow_redirects=True)
+    r = requests.get(url)
+    pdf_bytes = io.BytesIO(r.content)
 
-        if r.status_code != 200:
-            print("Axis PDF not reachable, skipping...")
-            return 0, ""
+    best_rate = 0
+    best_period = ""
 
-        pdf_file = io.BytesIO(r.content)
+    with pdfplumber.open(pdf_bytes) as pdf:
+        page = pdf.pages[0]   # first page only
+        tables = page.extract_tables()
 
-        best_rate = 0
-        best_period = ""
+        for table in tables:
+            for row in table:
+                if not row or len(row) < 2:
+                    continue
 
-        with pdfplumber.open(pdf_file) as pdf:
-            text = pdf.pages[0].extract_text()
+                tenure = (row[0] or "").strip()
+                rate_text = (row[1] or "").strip()
 
-        lines = text.split("\n")
-        in_section = False
+                # skip headers
+                if not tenure or "tenure" in tenure.lower():
+                    continue
 
-        for line in lines:
-            lower = line.lower()
+                # extract numeric rate
+                match = re.search(r"\d+(\.\d+)?", rate_text)
+                if not match:
+                    continue
 
-            if "less than" in lower and "3 cr" in lower:
-                in_section = True
-                continue
+                rate = float(match.group())
 
-            if not in_section:
-                continue
+                if rate > best_rate:
+                    best_rate = rate
+                    best_period = tenure
 
-            if "3 cr to less than" in lower:
-                break
-
-            decimals = re.findall(r"\d+\.\d+", line)
-            if not decimals:
-                continue
-
-            rate = float(decimals[0])
-
-            if rate > best_rate:
-                best_rate = rate
-                best_period = line.split(decimals[0])[0].strip()
-
-        return best_rate, best_period
-
-    except Exception as e:
-        print("Axis scraping failed:", e)
-        return 0, ""
-
-
-# ---------- PNB ----------
+    return {
+        "bank": "Axis Bank",
+        "scheme": "Callable FD ≤ 3Cr",
+        "period": best_period,
+        "rate_general": f"{best_rate:.2f}%",
+    }# ---------- PNB ----------
 def extract_pnb():
     URL = "https://www.pnb.bank.in/Interest-Rates-Deposit.html"
     r = requests.get(URL, headers=HEADERS, timeout=30)
