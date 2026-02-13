@@ -62,38 +62,8 @@ def extract_hdfc():
 
 
 # ---------- Axis (PDF parsing) ----------
-def extract_axis():
-    url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-12-february-26.pdf"
 
-    r = requests.get(url)
-    pdf = pdfplumber.open(io.BytesIO(r.content))
 
-    best_rate = 0
-    best_period = ""
-
-    # first page only
-    page = pdf.pages[0]
-    tables = page.extract_tables()
-
-    for table in tables:
-        for row in table:
-            if not row or len(row) < 2:
-                continue
-
-            tenure = str(row[0]).strip()
-            rate_text = str(row[1]).strip()
-
-            match = re.search(r"\d+(\.\d+)?", rate_text)
-            if match:
-                rate = float(match.group())
-
-                if rate > best_rate:
-                    best_rate = rate
-                    best_period = tenure
-
-    pdf.close()
-
-    return best_rate, best_period
 # ---------- Canara ----------
 
 def extract_canara():
@@ -249,7 +219,6 @@ def extract_idfcfirst():
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
-axis_rate, axis_period = extract_axis()
 pnb_rate, pnb_period = extract_pnb()
 canara_rate, canara_period = extract_canara()
 union_rate, union_period = extract_union()
@@ -262,7 +231,6 @@ idfc_rate, idfc_period = extract_idfcfirst()
 banks = [
     {"bank": "SBI", "period": sbi_period, "rate": sbi_rate},
     {"bank": "HDFC", "period": hdfc_period, "rate": hdfc_rate},
-    {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
     {"bank": "PNB", "period": pnb_period, "rate": pnb_rate},
     {"bank": "Canara Bank", "period": canara_period, "rate": canara_rate},
     {"bank": "ICICI", "period": "3 Years 1 Day to 5 Years", "rate": 6.5},
