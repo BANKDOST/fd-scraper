@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-13 02:22",
+  "last_updated": "2026-02-13 02:31",
   "banks": [
     {
       "bank": "SBI",
@@ -40,6 +40,13 @@
       "bank": "Bank of Baroda",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "444 days",
+      "rate_general": "6.45%",
+      "rate_senior": "6.95%"
+    },
+    {
+      "bank": "Indian Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "Ind Secure (444 Days)",
       "rate_general": "6.45%",
       "rate_senior": "6.95%"
     },
