@@ -145,7 +145,8 @@ def extract_pnb():
 
 
 # ---------- Canara ----------
-def extract_canara():
+
+ def extract_canara():
     URL = "https://www.canarabank.bank.in/pages/deposit-interest-rates"
     r = requests.get(URL, headers=HEADERS, timeout=30)
     soup = BeautifulSoup(r.text, "lxml")
@@ -163,7 +164,20 @@ def extract_canara():
                 continue
 
             period = cols[0]
-            rate = clean_rate(cols[1])  # general <3Cr column
+
+            # skip header rows
+            if "period" in period.lower():
+                continue
+
+            # skip NA
+            if "na" in cols[1].lower():
+                continue
+
+            rate = clean_rate(cols[1])
+
+            # ignore garbage values like 100000
+            if rate > 20:
+                continue
 
             if rate > best_rate:
                 best_rate = rate
