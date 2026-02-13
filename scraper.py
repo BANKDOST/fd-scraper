@@ -63,8 +63,7 @@ def extract_hdfc():
 
 # ---------- Axis Bank (PDF) ----------
 def extract_axis():
-    url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-12-february-26.pdf"
-
+    url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-13-february-26.pdf"
     try:
         r = requests.get(url, headers=HEADERS, timeout=30)
         if r.status_code != 200:
@@ -74,22 +73,24 @@ def extract_axis():
         best_period = ""
 
         with pdfplumber.open(io.BytesIO(r.content)) as pdf:
-            page = pdf.pages[0]
-            tables = page.extract_tables()
+            for page in pdf.pages:
+                tables = page.extract_tables()
+                for table in tables:
+                    for row in table:
+                        if not row or len(row) < 4:  # expect multiple columns
+                            continue
 
-        for table in tables:
-            for row in table:
-                if not row or len(row) < 2:
-                    continue
+                        # row columns: period, general_<3, general_3–5, senior_<3, senior_3–5
+                        period = str(row[0]).strip()
+                        try:
+                            rate_general = clean_rate(row[1])
+                        except:
+                            continue
 
-                period = str(row[0]).strip()
-                rate_text = str(row[1]).strip()
-
-                rate = clean_rate(rate_text)
-
-                if rate > best_rate:
-                    best_rate = rate
-                    best_period = period
+                        # filter only retail FD (<3cr)
+                        if rate_general > best_rate:
+                            best_rate = rate_general
+                            best_period = period
 
         return best_rate, best_period
 
