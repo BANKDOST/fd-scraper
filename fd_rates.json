@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-13 17:50",
+  "last_updated": "2026-02-13 17:54",
   "banks": [
     {
       "bank": "IDFC FIRST Bank",
@@ -21,6 +21,13 @@
       "period": "444 days (New Slab)",
       "rate_general": "6.60%",
       "rate_senior": "7.10%"
+    },
+    {
+      "bank": "Canara Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "555 Days*",
+      "rate_general": "6.50%",
+      "rate_senior": "7.00%"
     },
     {
       "bank": "ICICI",
@@ -58,16 +65,9 @@
       "rate_senior": "6.90%"
     },
     {
-      "bank": "Canara Bank",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "",
-      "rate_general": "0.00%",
-      "rate_senior": "0.50%"
-    },
-    {
       "bank": "Axis Bank",
       "scheme": "Callable FD \u2264 3Cr",
-      "period": "15 months < 18 months",
+      "period": "",
       "rate_general": "0.00%",
       "rate_senior": "0.50%"
     }
