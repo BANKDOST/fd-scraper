@@ -1,6 +1,13 @@
 {
-  "last_updated": "2026-02-12 19:56",
+  "last_updated": "2026-02-13 02:06",
   "banks": [
+    {
+      "bank": "Canara Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "PERIOD OF DEPOSIT",
+      "rate_general": "100000.00%",
+      "rate_senior": "100000.50%"
+    },
     {
       "bank": "SBI",
       "scheme": "Callable FD \u2264 3Cr",
