@@ -62,8 +62,10 @@ def extract_hdfc():
 
 
 # ---------- Axis Bank (PDF) ----------
+
 def extract_axis():
     url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-13-february-26.pdf"
+
     try:
         r = requests.get(url, headers=HEADERS, timeout=30)
         if r.status_code != 200:
@@ -75,30 +77,43 @@ def extract_axis():
         with pdfplumber.open(io.BytesIO(r.content)) as pdf:
             for page in pdf.pages:
                 tables = page.extract_tables()
+
                 for table in tables:
                     for row in table:
-                        if not row or len(row) < 4:  # expect multiple columns
+                        if not row or len(row) < 2:
                             continue
 
-                        # row columns: period, general_<3, general_3–5, senior_<3, senior_3–5
                         period = str(row[0]).strip()
-                        try:
-                            rate_general = clean_rate(row[1])
-                        except:
+
+                        # skip rows like "88 days"
+                        if "day" in period.lower():
                             continue
 
-                        # filter only retail FD (<3cr)
-                        if rate_general > best_rate:
-                            best_rate = rate_general
-                            best_period = period
+                        # scan remaining cells for %
+                        for cell in row[1:]:
+                            if not cell:
+                                continue
+
+                            text = str(cell)
+
+                            if "%" not in text:
+                                continue
+
+                            rate = clean_rate(text)
+
+                            # sanity filter
+                            if rate < 3 or rate > 10:
+                                continue
+
+                            if rate > best_rate:
+                                best_rate = rate
+                                best_period = period
 
         return best_rate, best_period
 
     except Exception as e:
         print("Axis scraping failed:", e)
         return 0, ""
-
-
 
 # ---------- Canara ----------
 
