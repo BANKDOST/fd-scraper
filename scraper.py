@@ -66,74 +66,34 @@ def extract_axis():
     url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-12-february-26.pdf"
 
     r = requests.get(url)
-    pdf_bytes = io.BytesIO(r.content)
+    pdf = pdfplumber.open(io.BytesIO(r.content))
 
     best_rate = 0
     best_period = ""
 
-    with pdfplumber.open(pdf_bytes) as pdf:
-        page = pdf.pages[0]   # first page only
-        tables = page.extract_tables()
+    # first page only
+    page = pdf.pages[0]
+    tables = page.extract_tables()
 
-        for table in tables:
-            for row in table:
-                if not row or len(row) < 2:
-                    continue
+    for table in tables:
+        for row in table:
+            if not row or len(row) < 2:
+                continue
 
-                tenure = (row[0] or "").strip()
-                rate_text = (row[1] or "").strip()
+            tenure = str(row[0]).strip()
+            rate_text = str(row[1]).strip()
 
-                # skip headers
-                if not tenure or "tenure" in tenure.lower():
-                    continue
-
-                # extract numeric rate
-                match = re.search(r"\d+(\.\d+)?", rate_text)
-                if not match:
-                    continue
-
+            match = re.search(r"\d+(\.\d+)?", rate_text)
+            if match:
                 rate = float(match.group())
 
                 if rate > best_rate:
                     best_rate = rate
                     best_period = tenure
 
-    return {
-        "bank": "Axis Bank",
-        "scheme": "Callable FD ≤ 3Cr",
-        "period": best_period,
-        "rate_general": f"{best_rate:.2f}%",
-    }# ---------- PNB ----------
-def extract_pnb():
-    URL = "https://www.pnb.bank.in/Interest-Rates-Deposit.html"
-    r = requests.get(URL, headers=HEADERS, timeout=30)
-    soup = BeautifulSoup(r.text, "lxml")
-
-    best_rate = 0
-    best_period = ""
-
-    section = soup.find("div", id="fa-tab132")
-    if not section:
-        return 0, ""
-
-    table = section.find("table", class_="inner-page-table")
-    rows = table.find_all("tr")
-
-    for row in rows[2:]:
-        cols = row.find_all("td")
-        if len(cols) < 3:
-            continue
-
-        period = cols[1].get_text(strip=True)
-        rate = clean_rate(cols[2].get_text(strip=True))
-
-        if rate > best_rate:
-            best_rate = rate
-            best_period = period
+    pdf.close()
 
     return best_rate, best_period
-
-
 # ---------- Canara ----------
 
 def extract_canara():
