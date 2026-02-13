@@ -62,7 +62,6 @@ def extract_hdfc():
 
 
 # ---------- Axis (PDF parsing) ----------
-
 def extract_axis():
     pdf_url = "https://www.axisbank.com/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits.pdf"
 
@@ -114,8 +113,7 @@ def extract_axis():
         return 0, ""
 
 
-
-# ---------- PNB (HTML parsing, no Selenium) ----------
+# ---------- PNB ----------
 def extract_pnb():
     URL = "https://www.pnb.bank.in/Interest-Rates-Deposit.html"
     r = requests.get(URL, headers=HEADERS, timeout=30)
@@ -131,7 +129,7 @@ def extract_pnb():
     table = section.find("table", class_="inner-page-table")
     rows = table.find_all("tr")
 
-    for row in rows[2:]:  # skip headers
+    for row in rows[2:]:
         cols = row.find_all("td")
         if len(cols) < 3:
             continue
@@ -146,17 +144,47 @@ def extract_pnb():
     return best_rate, best_period
 
 
+# ---------- Canara ----------
+def extract_canara():
+    URL = "https://www.canarabank.bank.in/pages/deposit-interest-rates"
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    best_rate = 0
+    best_period = ""
+
+    for table in soup.find_all("table"):
+        rows = table.find_all("tr")
+
+        for row in rows:
+            cols = [c.get_text(strip=True) for c in row.find_all("td")]
+
+            if len(cols) < 2:
+                continue
+
+            period = cols[0]
+            rate = clean_rate(cols[1])  # general <3Cr column
+
+            if rate > best_rate:
+                best_rate = rate
+                best_period = period
+
+    return best_rate, best_period
+
+
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
 axis_rate, axis_period = extract_axis()
 pnb_rate, pnb_period = extract_pnb()
+canara_rate, canara_period = extract_canara()
 
 banks = [
     {"bank": "SBI", "period": sbi_period, "rate": sbi_rate},
     {"bank": "HDFC", "period": hdfc_period, "rate": hdfc_rate},
     {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
     {"bank": "PNB", "period": pnb_period, "rate": pnb_rate},
+    {"bank": "Canara Bank", "period": canara_period, "rate": canara_rate},
     {"bank": "ICICI", "period": "3 Years 1 Day to 5 Years", "rate": 6.5},
     {"bank": "Bank of Baroda", "period": "444 days", "rate": 6.45},
 ]
