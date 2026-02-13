@@ -1,6 +1,13 @@
 {
-  "last_updated": "2026-02-13 02:31",
+  "last_updated": "2026-02-13 02:36",
   "banks": [
+    {
+      "bank": "IDFC FIRST Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "450 days \u2013 2 years",
+      "rate_general": "7.00%",
+      "rate_senior": "7.50%"
+    },
     {
       "bank": "SBI",
       "scheme": "Callable FD \u2264 3Cr",
