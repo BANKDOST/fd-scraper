@@ -61,7 +61,42 @@ def extract_hdfc():
     return best_rate, best_period
 
 
-# ---------- Axis (PDF parsing) ----------
+# ---------- Axis Bank (PDF) ----------
+def extract_axis():
+    url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-12-february-26.pdf"
+
+    try:
+        r = requests.get(url, headers=HEADERS, timeout=30)
+        if r.status_code != 200:
+            return 0, ""
+
+        best_rate = 0
+        best_period = ""
+
+        with pdfplumber.open(io.BytesIO(r.content)) as pdf:
+            page = pdf.pages[0]
+            tables = page.extract_tables()
+
+        for table in tables:
+            for row in table:
+                if not row or len(row) < 2:
+                    continue
+
+                period = str(row[0]).strip()
+                rate_text = str(row[1]).strip()
+
+                rate = clean_rate(rate_text)
+
+                if rate > best_rate:
+                    best_rate = rate
+                    best_period = period
+
+        return best_rate, best_period
+
+    except Exception as e:
+        print("Axis scraping failed:", e)
+        return 0, ""
+
 
 
 # ---------- Canara ----------
@@ -253,6 +288,8 @@ canara_rate, canara_period = extract_canara()
 union_rate, union_period = extract_union()
 indianbank_rate, indianbank_period = extract_indianbank()
 idfc_rate, idfc_period = extract_idfcfirst()
+axis_rate, axis_period = extract_axis()
+
 
 
 
@@ -267,6 +304,7 @@ banks = [
     {"bank": "Union Bank", "period": union_period, "rate": union_rate},
     {"bank": "Indian Bank", "period": indianbank_period, "rate": indianbank_rate},
     {"bank": "IDFC FIRST Bank", "period": idfc_period, "rate": idfc_rate},
+    {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
 ]
 
 banks.sort(key=lambda x: x["rate"], reverse=True)
