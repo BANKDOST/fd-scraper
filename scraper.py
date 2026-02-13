@@ -145,7 +145,7 @@ def extract_pnb():
 
 
 # ---------- Canara ----------
-# ---------- Canara ----------
+
 def extract_canara():
     URL = "https://www.canarabank.bank.in/pages/deposit-interest-rates"
     r = requests.get(URL, headers=HEADERS, timeout=30)
@@ -182,6 +182,41 @@ def extract_canara():
 
     return best_rate, best_period
 
+# ---------- Union Bank ----------
+def extract_union():
+    URL = "https://www.unionbankofindia.bank.in/en/details/rate-of-interest"
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    best_rate = 0
+    best_period = ""
+
+    table = soup.find("div", class_="inner-table")
+    if not table:
+        return 0, ""
+
+    rows = table.find_all("tr")
+
+    for row in rows:
+        cols = [c.get_text(strip=True) for c in row.find_all("td")]
+
+        if len(cols) < 2:
+            continue
+
+        period = cols[0]
+        rate = clean_rate(cols[1])
+
+        # ignore junk rows
+        if rate <= 0 or rate > 20:
+            continue
+
+        if rate > best_rate:
+            best_rate = rate
+            best_period = period
+
+    return best_rate, best_period
+
+
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
@@ -189,6 +224,8 @@ hdfc_rate, hdfc_period = extract_hdfc()
 axis_rate, axis_period = extract_axis()
 pnb_rate, pnb_period = extract_pnb()
 canara_rate, canara_period = extract_canara()
+union_rate, union_period = extract_union()
+
 
 banks = [
     {"bank": "SBI", "period": sbi_period, "rate": sbi_rate},
@@ -198,6 +235,7 @@ banks = [
     {"bank": "Canara Bank", "period": canara_period, "rate": canara_rate},
     {"bank": "ICICI", "period": "3 Years 1 Day to 5 Years", "rate": 6.5},
     {"bank": "Bank of Baroda", "period": "444 days", "rate": 6.45},
+    {"bank": "Union Bank", "period": union_period, "rate": union_rate},
 ]
 
 banks.sort(key=lambda x: x["rate"], reverse=True)
