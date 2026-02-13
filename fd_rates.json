@@ -1,19 +1,19 @@
 {
-  "last_updated": "2026-02-13 02:11",
+  "last_updated": "2026-02-13 02:16",
   "banks": [
-    {
-      "bank": "Canara Bank",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "PERIOD OF DEPOSIT",
-      "rate_general": "100000.00%",
-      "rate_senior": "100000.50%"
-    },
     {
       "bank": "SBI",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "2 Years",
       "rate_general": "6.80%",
       "rate_senior": "7.30%"
+    },
+    {
+      "bank": "Canara Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "555 Days*",
+      "rate_general": "6.50%",
+      "rate_senior": "7.00%"
     },
     {
       "bank": "ICICI",
