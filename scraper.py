@@ -212,6 +212,35 @@ def extract_idfcfirst():
         print("IDFC scraping failed:", e)
         return 0, ""
 
+def extract_pnb():
+    URL = "https://www.pnb.bank.in/Interest-Rates-Deposit.html"
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    best_rate = 0
+    best_period = ""
+
+    section = soup.find("div", id="fa-tab132")
+    if not section:
+        return 0, ""
+
+    table = section.find("table", class_="inner-page-table")
+    rows = table.find_all("tr")
+
+    for row in rows[2:]:
+        cols = row.find_all("td")
+        if len(cols) < 3:
+            continue
+
+        period = cols[1].get_text(strip=True)
+        rate = clean_rate(cols[2].get_text(strip=True))
+
+        if rate > best_rate:
+            best_rate = rate
+            best_period = period
+
+    return best_rate, best_period
+
 
 
 
