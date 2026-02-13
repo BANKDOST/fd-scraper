@@ -66,35 +66,38 @@ def extract_axis():
     url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-13-february-26.pdf"
     try:
         r = requests.get(url, headers=HEADERS, timeout=30)
-        r.raise_for_status()
+        if r.status_code != 200:
+            return 0, ""
         best_rate = 0
         best_period = ""
         with pdfplumber.open(io.BytesIO(r.content)) as pdf:
-            page = pdf.pages[0]  # All good rates here
+            page = pdf.pages[0]  # All rates on page 1
             tables = page.extract_tables()
             for table in tables:
                 for row in table:
-                    if not row or len(row) < 3:  # Need at least period + general rate
+                    if not row or len(row) < 3:
                         continue
                     period = str(row[0]).strip() if row[0] else ""
                     if not period or "header" in period.lower() or "maturity" in period.lower():
                         continue
-                    # Skip short days tenures (keep only meaningful ones)
+                    # Skip only pure short days tenures
                     if "days" in period.lower() and "months" not in period.lower():
                         continue
-                    # Key: General rate for < ₹3 Cr is row[1]
+                    # Explicit: General rate < ₹3 Cr is row[1]
                     rate_text = str(row[1]).strip() if len(row) > 1 else ""
                     rate = clean_rate(rate_text)
                     if rate > best_rate and 5 < rate <= 7.5:
                         best_rate = rate
-                        best_period = period  # First peak hit: "15 months < 18 months"
+                        best_period = period  # First: "15 months < 18 months"
         if best_rate > 0:
-            return best_rate, best_period or "15 months < 18 months"
+            return best_rate, best_period
         else:
-            return 0, ""
+            return 0, "15 months < 18 months"  # Fallback period if rate found but period missed
     except Exception as e:
-        print("Axis failed:", str(e))
+        print("Axis scraping failed:", e)
         return 0, ""
+
+  
 # ---------- Canara ----------
 
 def extract_canara():
