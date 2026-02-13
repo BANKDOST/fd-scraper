@@ -66,36 +66,34 @@ def extract_axis():
     url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-13-february-26.pdf"
     try:
         r = requests.get(url, headers=HEADERS, timeout=30)
-        r.raise_for_status()  # Raise error on bad status
+        r.raise_for_status()
         best_rate = 0
         best_period = ""
         with pdfplumber.open(io.BytesIO(r.content)) as pdf:
-            page = pdf.pages[0]  # All relevant rates on page 1
+            page = pdf.pages[0]  # All good rates here
             tables = page.extract_tables()
             for table in tables:
                 for row in table:
-                    if not row or len(row) < 3:  # Skip bad rows (period + rates)
+                    if not row or len(row) < 3:  # Need at least period + general rate
                         continue
                     period = str(row[0]).strip() if row[0] else ""
                     if not period or "header" in period.lower() or "maturity" in period.lower():
                         continue
-                    # Skip very short tenures (days only)
-                    if any(x in period.lower() for x in ["7 – 14", "15 – 29", "30 – 45", "46 – 60", "61 days"]):
+                    # Skip short days tenures (keep only meaningful ones)
+                    if "days" in period.lower() and "months" not in period.lower():
                         continue
-                    # General rate for <3 Cr is typically in row[1] (test with print(row) if needed)
+                    # Key: General rate for < ₹3 Cr is row[1]
                     rate_text = str(row[1]).strip() if len(row) > 1 else ""
                     rate = clean_rate(rate_text)
-                    if rate > best_rate and 5 < rate <= 7.5:  # Realistic FD range filter
+                    if rate > best_rate and 5 < rate <= 7.5:
                         best_rate = rate
-                        best_period = period  # Will first capture "15 months < 18 months"
+                        best_period = period  # First peak hit: "15 months < 18 months"
         if best_rate > 0:
-            print(f"Axis debug: Found {best_rate}% for {best_period}")  # Optional debug
-            return best_rate, best_period
+            return best_rate, best_period or "15 months < 18 months"
         else:
-            print("Axis: No valid rate found in PDF")
             return 0, ""
     except Exception as e:
-        print("Axis scraping failed:", str(e))
+        print("Axis failed:", str(e))
         return 0, ""
 # ---------- Canara ----------
 
