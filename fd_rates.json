@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-13 02:16",
+  "last_updated": "2026-02-13 02:22",
   "banks": [
     {
       "bank": "SBI",
@@ -7,6 +7,13 @@
       "period": "2 Years",
       "rate_general": "6.80%",
       "rate_senior": "7.30%"
+    },
+    {
+      "bank": "Union Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "444 days (New Slab)",
+      "rate_general": "6.60%",
+      "rate_senior": "7.10%"
     },
     {
       "bank": "Canara Bank",
