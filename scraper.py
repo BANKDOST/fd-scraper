@@ -62,57 +62,38 @@ def extract_hdfc():
 
 
 # ---------- Axis Bank (PDF) ----------
-
 def extract_axis():
     url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-13-february-26.pdf"
-
     try:
         r = requests.get(url, headers=HEADERS, timeout=30)
-        if r.status_code != 200:
-            return 0, ""
-
+        r.raise_for_status()
         best_rate = 0
         best_period = ""
-
         with pdfplumber.open(io.BytesIO(r.content)) as pdf:
-            for page in pdf.pages:
-                tables = page.extract_tables()
-
-                for table in tables:
-                    for row in table:
-                        if not row or len(row) < 2:
-                            continue
-
-                        period = str(row[0]).strip()
-
-                        # skip rows like "88 days"
-                        if "day" in period.lower():
-                            continue
-
-                        # scan remaining cells for %
-                        for cell in row[1:]:
-                            if not cell:
-                                continue
-
-                            text = str(cell)
-
-                            if "%" not in text:
-                                continue
-
-                            rate = clean_rate(text)
-
-                            # sanity filter
-                            if rate < 3 or rate > 10:
-                                continue
-
-                            if rate > best_rate:
-                                best_rate = rate
-                                best_period = period
-
-        return best_rate, best_period
-
+            # Focus on first page only, as rates are there
+            page = pdf.pages[0]
+            tables = page.extract_tables()
+            for table in tables:
+                for row in table:
+                    if not row or len(row) < 2:
+                        continue
+                    period = str(row[0]).strip()
+                    # Skip short tenures / junk
+                    if any(x in period.lower() for x in ["7 – 14", "15 – 29", "30 – 45", "46 – 60", "61 days - 87", "header"]):
+                        continue
+                    # Rate in column ~1 or 2 for <3 Cr (test prints if needed)
+                    rate_text = str(row[1] or row[2] or "").strip()
+                    rate = clean_rate(rate_text)
+                    if 5 < rate <= 7.5:
+                        if rate > best_rate:
+                            best_rate = rate
+                            best_period = period  # This will first hit "15 months < 18 months"
+        if best_rate > 0:
+            return best_rate, best_period
+        else:
+            return 0, ""
     except Exception as e:
-        print("Axis scraping failed:", e)
+        print("Axis failed:", e)
         return 0, ""
 
 # ---------- Canara ----------
