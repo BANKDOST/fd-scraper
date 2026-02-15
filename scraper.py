@@ -374,6 +374,35 @@ def extract_central_tables():
 
     return best_rate, best_period
 
+# ---------- Bandhan Bank ----------
+def extract_bandhan():
+    URL = "https://bandhan.bank.in/personal/fixed-deposits"
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    text = soup.get_text("\n", strip=True)
+
+    best_rate = 0
+    best_period = ""
+
+    # split into lines to preserve context
+    lines = text.split("\n")
+
+    for line in lines:
+        matches = re.findall(r"\d+\.\d+", line)
+
+        for m in matches:
+            rate = float(m)
+
+            # realistic FD filter
+            if 3 <= rate <= 15:
+                if rate > best_rate:
+                    best_rate = rate
+                    best_period = line
+
+    return best_rate, best_period
+
+
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
@@ -386,6 +415,8 @@ idfc_rate, idfc_period = extract_idfcfirst()
 axis_rate, axis_period = extract_axis()
 bom_rate, bom_period = extract_bom()
 central_rate, central_period = extract_central_tables()
+bandhan_rate, bandhan_period = extract_bandhan()
+
 
 
 
@@ -406,6 +437,7 @@ banks = [
     {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
     {"bank": "Bank of Maharashtra", "period": bom_period, "rate": bom_rate},
     {"bank": "Central Bank", "period": central_period, "rate": central_rate},
+    {"bank": "Bandhan Bank", "period": bandhan_period, "rate": bandhan_rate},
 ]
 
 banks.sort(key=lambda x: x["rate"], reverse=True)
