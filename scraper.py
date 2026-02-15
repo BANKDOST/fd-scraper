@@ -375,6 +375,7 @@ def extract_central_tables():
     return best_rate, best_period
 
 # ---------- Bandhan Bank ----------
+# ---------- Bandhan Bank ----------
 def extract_bandhan():
     URL = "https://bandhan.bank.in/personal/fixed-deposits"
     r = requests.get(URL, headers=HEADERS, timeout=30)
@@ -385,10 +386,15 @@ def extract_bandhan():
     best_rate = 0
     best_period = ""
 
-    # split into lines to preserve context
     lines = text.split("\n")
 
     for line in lines:
+        low = line.lower()
+
+        # skip senior citizen lines
+        if "senior" in low:
+            continue
+
         matches = re.findall(r"\d+\.\d+", line)
 
         for m in matches:
@@ -401,6 +407,7 @@ def extract_bandhan():
                     best_period = line
 
     return best_rate, best_period
+
 
 
 
