@@ -338,39 +338,41 @@ def extract_central_tables():
     for table in tables:
         text = table.get_text(" ", strip=True).lower()
 
-        # only allowed tables
+        # Only scrape relevant tables
         if not any(k in text for k in ["green", "special", "floating"]):
             continue
 
         for row in table.find_all("tr"):
             cells = [c.get_text(" ", strip=True) for c in row.find_all("td")]
+
             if len(cells) < 2:
                 continue
 
-            period = cells[0].lower()
+            period = cells[0].strip()
 
+            # skip header / invalid rows
             if not re.search(r"\d", period):
                 continue
-
-            if "senior" in period:
+            if "senior" in period.lower():
+                continue
+            if "revised" in period.lower():
                 continue
 
             rate = 0
+
             for cell in cells[1:]:
-                if re.search(r"\d", cell):
-                    rate = clean_rate(cell)
+                r = clean_rate(cell)
+
+                # realistic FD filter
+                if 3 <= r <= 9:
+                    rate = r
                     break
 
             if rate > best_rate:
                 best_rate = rate
-                best_period = cells[0]
+                best_period = period
 
     return best_rate, best_period
-
-
-
-
-
 
 
 # ---------- RUN ----------
