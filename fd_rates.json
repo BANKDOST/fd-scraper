@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-14 19:42",
+  "last_updated": "2026-02-15 17:02",
   "banks": [
     {
       "bank": "IDFC FIRST Bank",
@@ -14,6 +14,13 @@
       "period": "2 Years",
       "rate_general": "6.80%",
       "rate_senior": "7.30%"
+    },
+    {
+      "bank": "Bank of Maharashtra",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "400 days",
+      "rate_general": "6.65%",
+      "rate_senior": "7.15%"
     },
     {
       "bank": "Union Bank",
