@@ -284,6 +284,46 @@ def extract_pnb():
     return best_rate, best_period
 
 
+# ---------- Bank of Maharashtra ----------
+def extract_bom():
+    URL = "https://bankofmaharashtra.bank.in/domestic-term-deposits"
+
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    best_rate = 0
+    best_period = ""
+
+    for row in soup.find_all("tr"):
+        cells = [c.get_text(" ", strip=True) for c in row.find_all("td")]
+
+        if len(cells) < 2:
+            continue
+
+        period = cells[0]
+
+        # must look like FD tenure
+        if not re.search(r"(day|month|year)", period.lower()):
+            continue
+
+        # find first numeric rate in the row
+        rate = 0
+        for cell in cells[1:]:
+            if re.search(r"\d", cell):
+                rate = clean_rate(cell)
+                break
+
+        if rate <= 0:
+            continue
+
+        if rate > best_rate:
+            best_rate = rate
+            best_period = period
+
+    return best_rate, best_period
+
+
+
 
 
 
@@ -296,6 +336,8 @@ union_rate, union_period = extract_union()
 indianbank_rate, indianbank_period = extract_indianbank()
 idfc_rate, idfc_period = extract_idfcfirst()
 axis_rate, axis_period = extract_axis()
+bom_rate, bom_period = extract_bom()
+
 
 
 
@@ -312,6 +354,7 @@ banks = [
     {"bank": "Indian Bank", "period": indianbank_period, "rate": indianbank_rate},
     {"bank": "IDFC FIRST Bank", "period": idfc_period, "rate": idfc_rate},
     {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
+    {"bank": "Bank of Maharashtra", "period": bom_period, "rate": bom_rate},
 ]
 
 banks.sort(key=lambda x: x["rate"], reverse=True)
