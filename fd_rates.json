@@ -1,6 +1,13 @@
 {
-  "last_updated": "2026-02-15 17:27",
+  "last_updated": "2026-02-15 17:41",
   "banks": [
+    {
+      "bank": "Bandhan Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "7.70% interest p.a.",
+      "rate_general": "7.70%",
+      "rate_senior": "8.20%"
+    },
     {
       "bank": "IDFC FIRST Bank",
       "scheme": "Callable FD \u2264 3Cr",
