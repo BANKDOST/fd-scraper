@@ -324,6 +324,52 @@ def extract_bom():
 
 
 
+# ---------- CBI ----------
+def extract_central_tables():
+    URL = "https://centralbank.bank.in/en/interest-rates-on-deposit"
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    best_rate = 0
+    best_period = ""
+
+    tables = soup.find_all("table")
+
+    for table in tables:
+        text = table.get_text(" ", strip=True).lower()
+
+        # only allowed tables
+        if not any(k in text for k in ["green", "special", "floating"]):
+            continue
+
+        for row in table.find_all("tr"):
+            cells = [c.get_text(" ", strip=True) for c in row.find_all("td")]
+            if len(cells) < 2:
+                continue
+
+            period = cells[0].lower()
+
+            if not re.search(r"\d", period):
+                continue
+
+            if "senior" in period:
+                continue
+
+            rate = 0
+            for cell in cells[1:]:
+                if re.search(r"\d", cell):
+                    rate = clean_rate(cell)
+                    break
+
+            if rate > best_rate:
+                best_rate = rate
+                best_period = cells[0]
+
+    return best_rate, best_period
+
+
+
+
 
 
 
@@ -337,6 +383,8 @@ indianbank_rate, indianbank_period = extract_indianbank()
 idfc_rate, idfc_period = extract_idfcfirst()
 axis_rate, axis_period = extract_axis()
 bom_rate, bom_period = extract_bom()
+central_rate, central_period = extract_central_tables()
+
 
 
 
@@ -355,6 +403,7 @@ banks = [
     {"bank": "IDFC FIRST Bank", "period": idfc_period, "rate": idfc_rate},
     {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
     {"bank": "Bank of Maharashtra", "period": bom_period, "rate": bom_rate},
+    {"bank": "Central Bank", "period": central_period, "rate": central_rate},
 ]
 
 banks.sort(key=lambda x: x["rate"], reverse=True)
