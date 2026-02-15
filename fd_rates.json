@@ -1,6 +1,13 @@
 {
-  "last_updated": "2026-02-15 17:02",
+  "last_updated": "2026-02-15 17:22",
   "banks": [
+    {
+      "bank": "Central Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "Revised Rates w.e.f. 10.12.2025",
+      "rate_general": "10.12%",
+      "rate_senior": "10.62%"
+    },
     {
       "bank": "IDFC FIRST Bank",
       "scheme": "Callable FD \u2264 3Cr",
