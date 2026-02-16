@@ -61,72 +61,6 @@ def extract_hdfc():
     return best_rate, best_period
 
 
-# ---------- Axis Bank (PDF) ----------
-
-def extract_axis():
-    url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-13-february-26.pdf"
-
-    try:
-        r = requests.get(url, headers=HEADERS, timeout=30)
-        if r.status_code != 200:
-            print("Axis PDF download failed:", r.status_code)
-            return 0, ""
-
-        best_rate = 0
-        best_period = ""
-        target_col = None
-
-        with pdfplumber.open(io.BytesIO(r.content)) as pdf:
-            page = pdf.pages[0]
-            tables = page.extract_tables()
-
-            for table in tables:
-                for row in table:
-                    if not row:
-                        continue
-
-                    row = [str(c).strip() if c else "" for c in row]
-
-                    # --- Find General < 3Cr column (first occurrence only) ---
-                    if target_col is None:
-                        for i, cell in enumerate(row):
-                            if "less than" in cell.lower() and "3" in cell:
-                                target_col = i
-                                print("Axis: locked General <3Cr column:", target_col)
-                                break
-                        continue
-
-                    # Skip header rows
-                    if "maturity" in " ".join(row).lower():
-                        continue
-
-                    if len(row) <= target_col:
-                        continue
-
-                    period = row[0]
-                    rate = clean_rate(row[target_col])
-
-                    if rate == 0:
-                        continue
-
-                    print("Axis row:", period, "|", rate)
-
-                    if rate > best_rate:
-                        best_rate = rate
-                        best_period = period
-
-        if best_rate > 0:
-            print(f"Axis success: {best_rate}% for '{best_period}'")
-            return best_rate, best_period
-
-        print("Axis: No valid rows found")
-        return 0, ""
-
-    except Exception as e:
-        print("Axis failed:", str(e))
-        return 0, ""
-
-
 # ---------- Canara ----------
 
 def extract_canara():
@@ -446,7 +380,6 @@ canara_rate, canara_period = extract_canara()
 union_rate, union_period = extract_union()
 indianbank_rate, indianbank_period = extract_indianbank()
 idfc_rate, idfc_period = extract_idfcfirst()
-axis_rate, axis_period = extract_axis()
 bom_rate, bom_period = extract_bom()
 central_rate, central_period = extract_central_tables()
 bandhan_rate, bandhan_period = extract_bandhan()
@@ -468,7 +401,6 @@ banks = [
     {"bank": "Union Bank", "period": union_period, "rate": union_rate},
     {"bank": "Indian Bank", "period": indianbank_period, "rate": indianbank_rate},
     {"bank": "IDFC FIRST Bank", "period": idfc_period, "rate": idfc_rate},
-    {"bank": "Axis Bank", "period": axis_period, "rate": axis_rate},
     {"bank": "Bank of Maharashtra", "period": bom_period, "rate": bom_rate},
     {"bank": "Central Bank", "period": central_period, "rate": central_rate},
     {"bank": "Bandhan Bank", "period": bandhan_period, "rate": bandhan_rate},
