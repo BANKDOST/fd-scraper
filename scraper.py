@@ -375,38 +375,44 @@ def extract_central_tables():
     return best_rate, best_period
 
 # ---------- Bandhan Bank ----------
-# ---------- Bandhan Bank ----------
+
 def extract_bandhan():
     URL = "https://bandhan.bank.in/personal/fixed-deposits"
     r = requests.get(URL, headers=HEADERS, timeout=30)
     soup = BeautifulSoup(r.text, "lxml")
 
-    text = soup.get_text("\n", strip=True)
+    lines = soup.get_text("\n", strip=True).split("\n")
 
     best_rate = 0
     best_period = ""
 
-    lines = text.split("\n")
+    for i, line in enumerate(lines):
 
-    for line in lines:
-        low = line.lower()
-
-        # skip senior citizen lines
-        if "senior" in low:
+        # detect "for others" label
+        if "for others" not in line.lower():
             continue
 
-        matches = re.findall(r"\d+\.\d+", line)
+        # rate is above
+        rate = 0
+        for j in range(i-1, -1, -1):
+            m = re.search(r"\d+\.\d+", lines[j])
+            if m:
+                rate = float(m.group())
+                break
 
-        for m in matches:
-            rate = float(m)
+        # tenure is below
+        tenure = ""
+        for k in range(i+1, min(i+6, len(lines))):
+            if "tenure" in lines[k].lower():
+                tenure = lines[k]
+                break
 
-            # realistic FD filter
-            if 3 <= rate <= 15:
-                if rate > best_rate:
-                    best_rate = rate
-                    best_period = line
+        if rate > best_rate:
+            best_rate = rate
+            best_period = tenure.replace("for a tenure of", "").strip()
 
     return best_rate, best_period
+     
 
 
 
