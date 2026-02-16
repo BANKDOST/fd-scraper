@@ -1,8 +1,9 @@
 name: FD Rate Scraper
 
 on:
+  # Schedule: 0:30 UTC = 6:00 AM IST daily
   schedule:
-    - cron: "30 19 * * *"
+    - cron: "30 0 * * *"
   workflow_dispatch:
 
 permissions:
@@ -13,15 +14,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1️⃣ Checkout the repository
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      # 2️⃣ Setup Python 3.11
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      # ✅ install Chrome for Selenium
+      # 3️⃣ Install Chrome for Selenium (required if your scraper uses Selenium)
       - name: Install Chrome
         run: |
           sudo apt-get update
@@ -29,14 +32,16 @@ jobs:
           wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
           sudo apt install -y ./google-chrome-stable_current_amd64.deb
 
-      # ✅ install python packages
+      # 4️⃣ Install Python dependencies
       - name: Install dependencies
         run: |
-          pip install requests beautifulsoup4 pdfplumber selenium webdriver-manager lxml
+          pip install -q requests beautifulsoup4 pdfplumber selenium webdriver-manager lxml
 
+      # 5️⃣ Run the scraper
       - name: Run scraper
         run: python scraper.py
 
+      # 6️⃣ Commit and push updated JSON
       - name: Commit updated JSON
         run: |
           git config --global user.name "fd-bot"
