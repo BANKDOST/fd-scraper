@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-02-16 06:57",
+  "last_updated": "2026-02-16 07:14",
   "banks": [
     {
       "bank": "Bandhan Bank",
@@ -84,13 +84,6 @@
       "period": "390 days",
       "rate_general": "6.40%",
       "rate_senior": "6.90%"
-    },
-    {
-      "bank": "Axis Bank",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "",
-      "rate_general": "0.00%",
-      "rate_senior": "0.50%"
     }
   ]
 }
