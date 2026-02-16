@@ -64,43 +64,57 @@ def extract_hdfc():
 # ---------- Axis Bank (PDF) ----------
 def extract_axis():
     url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-13-february-26.pdf"
+
     try:
         r = requests.get(url, headers=HEADERS, timeout=30)
         if r.status_code != 200:
-            print("Axis PDF download failed, status:", r.status_code)
+            print("Axis PDF download failed:", r.status_code)
             return 0, ""
+
         best_rate = 0
         best_period = ""
+
         with pdfplumber.open(io.BytesIO(r.content)) as pdf:
             page = pdf.pages[0]
             tables = page.extract_tables()
+
             for table in tables:
                 for row in table:
-                    if not row or len(row) < 3:
+                    if not row:
                         continue
-                    period_raw = row[0]
-                    period = str(period_raw).strip() if period_raw else ""
-                    if not period or "header" in period.lower() or "maturity" in period.lower():
+
+                    # --- CASE 1: Proper columns exist ---
+                    if len(row) >= 2 and row[1]:
+                        period = str(row[0]).strip()
+                        rate = clean_rate(str(row[1]))
+
+                    # --- CASE 2: Collapsed row ---
+                    else:
+                        row_text = " ".join([str(c) for c in row if c])
+                        numbers = re.findall(r"\d+\.\d+", row_text)
+
+                        if not numbers:
+                            continue
+
+                        period = row_text
+                        rate = float(numbers[0])  # first number = Gen <3Cr
+
+                    if "days" not in period.lower() and "month" not in period.lower() and "year" not in period.lower():
                         continue
-                    # Skip short days
-                    if "days" in period.lower() and "months" not in period.lower():
-                        continue
-                    # Explicit general <3 Cr rate: row[1]
-                    rate_raw = row[1]
-                    rate_text = str(rate_raw).strip() if rate_raw else ""
-                    rate = clean_rate(rate_text)
-                    # Debug: Print when we hit a good long tenure
-                    if "months" in period.lower() or "year" in period.lower():
-                        print(f"Axis debug - Period: '{period}' | Raw rate text: '{rate_text}' | Parsed rate: {rate}")
-                    if rate > best_rate and 5 < rate <= 7.5:
+
+                    print("Axis debug:", period, "| rate:", rate)
+
+                    if rate > best_rate:
                         best_rate = rate
                         best_period = period
+
         if best_rate > 0:
             print(f"Axis success: {best_rate}% for '{best_period}'")
             return best_rate, best_period
-        else:
-            print("Axis: No qualifying rate found")
-            return 0, ""
+
+        print("Axis: No qualifying rate found")
+        return 0, ""
+
     except Exception as e:
         print("Axis failed:", str(e))
         return 0, ""
