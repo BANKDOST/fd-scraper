@@ -62,6 +62,7 @@ def extract_hdfc():
 
 
 # ---------- Axis Bank (PDF) ----------
+
 def extract_axis():
     url = "https://www.axis.bank.in/docs/default-source/default-document-library/interest-rates/domestic-fixed-deposits-13-february-26.pdf"
 
@@ -73,6 +74,7 @@ def extract_axis():
 
         best_rate = 0
         best_period = ""
+        target_col = None
 
         with pdfplumber.open(io.BytesIO(r.content)) as pdf:
             page = pdf.pages[0]
@@ -83,26 +85,31 @@ def extract_axis():
                     if not row:
                         continue
 
-                    # --- CASE 1: Proper columns exist ---
-                    if len(row) >= 2 and row[1]:
-                        period = str(row[0]).strip()
-                        rate = clean_rate(str(row[1]))
+                    row = [str(c).strip() if c else "" for c in row]
 
-                    # --- CASE 2: Collapsed row ---
-                    else:
-                        row_text = " ".join([str(c) for c in row if c])
-                        numbers = re.findall(r"\d+\.\d+", row_text)
-
-                        if not numbers:
-                            continue
-
-                        period = row_text
-                        rate = float(numbers[0])  # first number = Gen <3Cr
-
-                    if "days" not in period.lower() and "month" not in period.lower() and "year" not in period.lower():
+                    # --- Find General < 3Cr column (first occurrence only) ---
+                    if target_col is None:
+                        for i, cell in enumerate(row):
+                            if "less than" in cell.lower() and "3" in cell:
+                                target_col = i
+                                print("Axis: locked General <3Cr column:", target_col)
+                                break
                         continue
 
-                    print("Axis debug:", period, "| rate:", rate)
+                    # Skip header rows
+                    if "maturity" in " ".join(row).lower():
+                        continue
+
+                    if len(row) <= target_col:
+                        continue
+
+                    period = row[0]
+                    rate = clean_rate(row[target_col])
+
+                    if rate == 0:
+                        continue
+
+                    print("Axis row:", period, "|", rate)
 
                     if rate > best_rate:
                         best_rate = rate
@@ -112,14 +119,14 @@ def extract_axis():
             print(f"Axis success: {best_rate}% for '{best_period}'")
             return best_rate, best_period
 
-        print("Axis: No qualifying rate found")
+        print("Axis: No valid rows found")
         return 0, ""
 
     except Exception as e:
         print("Axis failed:", str(e))
         return 0, ""
 
-  
+
 # ---------- Canara ----------
 
 def extract_canara():
