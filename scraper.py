@@ -369,58 +369,72 @@ def extract_bandhan():
     return best_rate, best_period
 
 # ---------- AU Small Finance Bank ----------
-def extract_au_bank():
+
+   def extract_au_bank():
     URL = "https://www.au.bank.in/interest-rates/fixed-deposit-interest-rates"
 
-    r = requests.get(URL, headers=HEADERS, timeout=30)
-    r.encoding = r.apparent_encoding
+    r = safe_get(URL, headers=HEADERS)
+    if not r:
+        return 0, ""
 
+    r.encoding = r.apparent_encoding
     soup = BeautifulSoup(r.text, "lxml")
 
-    best_rate = 0
-    best_period = ""
+    target_heading = None
 
-    # Target FIRST table only
-    table = soup.find("table")
+    # Find heading containing Retail FD < 3 Cr
+    for tag in soup.find_all(["h2", "h3", "strong", "p"]):
+        text = tag.get_text(strip=True)
+
+        if "Retail Fixed Deposits" in text and "< ₹3 Crore" in text:
+            target_heading = tag
+            break
+
+    if not target_heading:
+        return 0, ""
+
+    # The table is usually the next table after heading
+    table = target_heading.find_next("table")
+
     if not table:
         return 0, ""
 
-    # Detect interest rate column index from header row
-    header_row = table.find("tr")
-    headers = [h.get_text(strip=True) for h in header_row.find_all(["th", "td"])]
+    rows = table.find_all("tr")
+
+    if not rows:
+        return 0, ""
+
+    # Detect Interest Rate column index
+    header_cells = [h.get_text(strip=True) for h in rows[0].find_all(["th", "td"])]
 
     rate_col_index = -1
 
-    for i, h in enumerate(headers):
-        if "interest rates" in h.lower():
+    for i, h in enumerate(header_cells):
+        if "interest" in h.lower():
             rate_col_index = i
             break
 
     if rate_col_index == -1:
         return 0, ""
 
-    # Iterate data rows (skip header)
-    for row in table.find_all("tr")[1:]:
+    best_rate = 0
+    best_period = ""
+
+    # Scan FD data rows
+    for row in rows[1:]:
         cols = [c.get_text(strip=True) for c in row.find_all("td")]
 
         if len(cols) <= rate_col_index:
             continue
 
         period = cols[0]
-        rate_text = cols[rate_col_index]
+        rate = clean_rate(cols[rate_col_index])
 
-        rate = clean_rate(rate_text)
-
-        if rate <= 0 or rate > 20:
-            continue
-
-        if rate > best_rate:
+        if rate > best_rate and rate <= 20:
             best_rate = rate
             best_period = period
 
     return best_rate, best_period
-     
-
 
 
 
