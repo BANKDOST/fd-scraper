@@ -5,6 +5,8 @@ import re
 import pdfplumber
 import io
 from datetime import datetime
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
