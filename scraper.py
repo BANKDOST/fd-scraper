@@ -8,6 +8,36 @@ from datetime import datetime
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
+# ---------- Network Safe Request ----------
+def safe_get(url, headers=None, timeout=30, retries=3):
+    session = requests.Session()
+
+    retry_strategy = Retry(
+        total=retries,
+        backoff_factor=1,
+        status_forcelist=[500, 502, 503, 504],
+    )
+
+    adapter = HTTPAdapter(max_retries=retry_strategy)
+
+    session.mount("http://", adapter)
+    session.mount("https://", adapter)
+
+    try:
+        response = session.get(
+            url,
+            headers=headers,
+            timeout=timeout,
+            stream=False
+        )
+
+        response.raise_for_status()
+        return response
+
+    except Exception as e:
+        print("Request failed:", e)
+        return None
+
 
 # ---------- Helper ----------
 def clean_rate(text):
