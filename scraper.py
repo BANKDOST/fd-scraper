@@ -370,7 +370,7 @@ def extract_bandhan():
 
 # ---------- AU Small Finance Bank ----------
 
-   def extract_au_bank():
+def extract_au_bank():
     URL = "https://www.au.bank.in/interest-rates/fixed-deposit-interest-rates"
 
     r = safe_get(URL, headers=HEADERS)
