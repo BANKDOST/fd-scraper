@@ -367,6 +367,58 @@ def extract_bandhan():
             best_period = tenure.replace("for a tenure of", "").strip()
 
     return best_rate, best_period
+
+# ---------- AU Small Finance Bank ----------
+def extract_au_bank():
+    URL = "https://www.au.bank.in/interest-rates/fixed-deposit-interest-rates"
+
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    r.encoding = r.apparent_encoding
+
+    soup = BeautifulSoup(r.text, "lxml")
+
+    best_rate = 0
+    best_period = ""
+
+    # Target FIRST table only
+    table = soup.find("table")
+    if not table:
+        return 0, ""
+
+    # Detect interest rate column index from header row
+    header_row = table.find("tr")
+    headers = [h.get_text(strip=True) for h in header_row.find_all(["th", "td"])]
+
+    rate_col_index = -1
+
+    for i, h in enumerate(headers):
+        if "interest rates" in h.lower():
+            rate_col_index = i
+            break
+
+    if rate_col_index == -1:
+        return 0, ""
+
+    # Iterate data rows (skip header)
+    for row in table.find_all("tr")[1:]:
+        cols = [c.get_text(strip=True) for c in row.find_all("td")]
+
+        if len(cols) <= rate_col_index:
+            continue
+
+        period = cols[0]
+        rate_text = cols[rate_col_index]
+
+        rate = clean_rate(rate_text)
+
+        if rate <= 0 or rate > 20:
+            continue
+
+        if rate > best_rate:
+            best_rate = rate
+            best_period = period
+
+    return best_rate, best_period
      
 
 
@@ -383,6 +435,7 @@ idfc_rate, idfc_period = extract_idfcfirst()
 bom_rate, bom_period = extract_bom()
 central_rate, central_period = extract_central_tables()
 bandhan_rate, bandhan_period = extract_bandhan()
+au_rate, au_period = extract_au_bank()
 
 
 
@@ -404,6 +457,7 @@ banks = [
     {"bank": "Bank of Maharashtra", "period": bom_period, "rate": bom_rate},
     {"bank": "Central Bank", "period": central_period, "rate": central_rate},
     {"bank": "Bandhan Bank", "period": bandhan_period, "rate": bandhan_rate},
+    {"bank": "AU Small Finance Bank", "period": au_period, "rate": au_rate},
 ]
 
 banks.sort(key=lambda x: x["rate"], reverse=True)
