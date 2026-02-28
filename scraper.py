@@ -401,15 +401,21 @@ def extract_bandhan():
     return best_rate, best_period
 
 # ---------- AU Small Finance Bank ----------
+
+import re
+import time
+from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
-from bs4 import BeautifulSoup
-import time
-import re
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
 
 def clean_rate(text):
     match = re.search(r"\d+(\.\d+)?", text)
     return float(match.group()) if match else 0
+
 
 def extract_au_bank():
 
@@ -423,34 +429,72 @@ def extract_au_bank():
     driver = webdriver.Chrome(options=options)
     driver.get(url)
 
-    time.sleep(6)  # allow JS to fully render
+    # Wait until at least one table loads
+    WebDriverWait(driver, 20).until(
+        EC.presence_of_element_located((By.TAG_NAME, "table"))
+    )
 
     soup = BeautifulSoup(driver.page_source, "lxml")
     driver.quit()
 
-    best_rate = 0
+    # -------------------------------------------------
+    # STEP 1: Find correct Retail ≤ 3Cr section
+    # -------------------------------------------------
+
+    target_heading = None
+
+    for tag in soup.find_all(["h2", "h3", "h4", "strong", "p"]):
+        text = tag.get_text(strip=True)
+
+        if (
+            "Domestic" in text
+            and "Retail Fixed Deposit" in text
+            and "3 Crore" in text
+        ):
+            target_heading = tag
+            break
+
+    if not target_heading:
+        return 0, 0, ""
+
+    # -------------------------------------------------
+    # STEP 2: Get table just below this heading
+    # -------------------------------------------------
+
+    table = target_heading.find_next("table")
+
+    if not table:
+        return 0, 0, ""
+
+    # -------------------------------------------------
+    # STEP 3: Parse rows (skip header rows)
+    # -------------------------------------------------
+
+    best_general = 0
+    best_senior = 0
     best_period = ""
 
-    tables = soup.find_all("table")
+    rows = table.find_all("tr")
 
-    for table in tables:
-        rows = table.find_all("tr")
+    for row in rows:
+        tds = row.find_all("td")
 
-        for row in rows[1:]:
-            cols = [c.get_text(strip=True) for c in row.find_all("td")]
+        # Skip header rows (they use <th>)
+        if len(tds) < 3:
+            continue
 
-            if len(cols) < 2:
-                continue
+        cols = [td.get_text(strip=True) for td in tds]
 
-            period = cols[0]
-            rate = clean_rate(cols[1])
+        period = cols[0]
+        general_rate = clean_rate(cols[1])
+        senior_rate = clean_rate(cols[2])
 
-            if rate > best_rate and rate <= 20:
-                best_rate = rate
-                best_period = period
+        if general_rate > best_general and general_rate <= 20:
+            best_general = general_rate
+            best_senior = senior_rate
+            best_period = period
 
-    return best_rate, best_period
-
+    return best_general, best_senior, best_period
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
