@@ -400,56 +400,6 @@ def extract_bandhan():
 
     return best_rate, best_period
 
-# ---------- AU Small Finance Bank ----------
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-import time
-
-# Setup Chrome options
-options = Options()
-options.add_argument("--start-maximized")
-
-driver = webdriver.Chrome(options=options)
-
-url = "https://www.au.bank.in/interest-rates/fixed-deposit-interest-rates"
-driver.get(url)
-
-wait = WebDriverWait(driver, 20)
-
-# Scroll down to load dynamic content
-driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-time.sleep(5)
-
-# Wait for table to appear
-table = wait.until(
-    EC.presence_of_element_located((By.XPATH, "//h3[contains(text(),'Retail Fixed Deposit Interest Rates')]"))
-)
-
-# Scroll to table section
-driver.execute_script("arguments[0].scrollIntoView(true);", table)
-time.sleep(3)
-
-# Get the table rows under that section
-rows = driver.find_elements(By.XPATH, "//table//tr")
-
-print("---- Retail FD ≤ 3 Cr ----")
-
-for row in rows:
-    cols = row.find_elements(By.TAG_NAME, "td")
-    if len(cols) >= 3:
-        period = cols[0].text.strip()
-        general = cols[1].text.strip()
-        senior = cols[2].text.strip()
-
-        print(f"Period: {period}")
-        print(f"General: {general}")
-        print(f"Senior: {senior}")
-        print("------------")
-
-driver.quit()
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
@@ -462,7 +412,7 @@ idfc_rate, idfc_period = extract_idfcfirst()
 bom_rate, bom_period = extract_bom()
 central_rate, central_period = extract_central_tables()
 bandhan_rate, bandhan_period = extract_bandhan()
-au_rate, au_period = extract_au_bank()
+
 
 
 
@@ -484,7 +434,7 @@ banks = [
     {"bank": "Bank of Maharashtra", "period": bom_period, "rate": bom_rate},
     {"bank": "Central Bank", "period": central_period, "rate": central_rate},
     {"bank": "Bandhan Bank", "period": bandhan_period, "rate": bandhan_rate},
-    {"bank": "AU Small Finance Bank", "period": au_period, "rate": au_rate},
+   
 ]
 
 banks.sort(key=lambda x: x["rate"], reverse=True)
