@@ -401,100 +401,56 @@ def extract_bandhan():
     return best_rate, best_period
 
 # ---------- AU Small Finance Bank ----------
-
-import re
-import time
-from bs4 import BeautifulSoup
 from selenium import webdriver
-from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import time
 
+# Setup Chrome options
+options = Options()
+options.add_argument("--start-maximized")
 
-def clean_rate(text):
-    match = re.search(r"\d+(\.\d+)?", text)
-    return float(match.group()) if match else 0
+driver = webdriver.Chrome(options=options)
 
+url = "https://www.au.bank.in/interest-rates/fixed-deposit-interest-rates"
+driver.get(url)
 
-def extract_au_bank():
+wait = WebDriverWait(driver, 20)
 
-    url = "https://www.au.bank.in/interest-rates/fixed-deposit-interest-rates"
+# Scroll down to load dynamic content
+driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+time.sleep(5)
 
-    options = Options()
-    options.add_argument("--headless")
-    options.add_argument("--start-maximized")
-    options.add_argument("--disable-blink-features=AutomationControlled")
+# Wait for table to appear
+table = wait.until(
+    EC.presence_of_element_located((By.XPATH, "//h3[contains(text(),'Retail Fixed Deposit Interest Rates')]"))
+)
 
-    driver = webdriver.Chrome(options=options)
-    driver.get(url)
+# Scroll to table section
+driver.execute_script("arguments[0].scrollIntoView(true);", table)
+time.sleep(3)
 
-    # Wait until at least one table loads
-    WebDriverWait(driver, 20).until(
-        EC.presence_of_element_located((By.TAG_NAME, "table"))
-    )
+# Get the table rows under that section
+rows = driver.find_elements(By.XPATH, "//table//tr")
 
-    soup = BeautifulSoup(driver.page_source, "lxml")
-    driver.quit()
+print("---- Retail FD ≤ 3 Cr ----")
 
-    # -------------------------------------------------
-    # STEP 1: Find correct Retail ≤ 3Cr section
-    # -------------------------------------------------
+for row in rows:
+    cols = row.find_elements(By.TAG_NAME, "td")
+    if len(cols) >= 3:
+        period = cols[0].text.strip()
+        general = cols[1].text.strip()
+        senior = cols[2].text.strip()
 
-    target_heading = None
+        print(f"Period: {period}")
+        print(f"General: {general}")
+        print(f"Senior: {senior}")
+        print("------------")
 
-    for tag in soup.find_all(["h2", "h3", "h4", "strong", "p"]):
-        text = tag.get_text(strip=True)
+driver.quit()
 
-        if (
-            "Domestic" in text
-            and "Retail Fixed Deposit" in text
-            and "3 Crore" in text
-        ):
-            target_heading = tag
-            break
-
-    if not target_heading:
-        return 0, 0, ""
-
-    # -------------------------------------------------
-    # STEP 2: Get table just below this heading
-    # -------------------------------------------------
-
-    table = target_heading.find_next("table")
-
-    if not table:
-        return 0, 0, ""
-
-    # -------------------------------------------------
-    # STEP 3: Parse rows (skip header rows)
-    # -------------------------------------------------
-
-    best_general = 0
-    best_senior = 0
-    best_period = ""
-
-    rows = table.find_all("tr")
-
-    for row in rows:
-        tds = row.find_all("td")
-
-        # Skip header rows (they use <th>)
-        if len(tds) < 3:
-            continue
-
-        cols = [td.get_text(strip=True) for td in tds]
-
-        period = cols[0]
-        general_rate = clean_rate(cols[1])
-        senior_rate = clean_rate(cols[2])
-
-        if general_rate > best_general and general_rate <= 20:
-            best_general = general_rate
-            best_senior = senior_rate
-            best_period = period
-
-    return best_general, best_senior, best_period
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
