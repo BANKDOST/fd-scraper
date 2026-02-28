@@ -401,74 +401,55 @@ def extract_bandhan():
     return best_rate, best_period
 
 # ---------- AU Small Finance Bank ----------
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from bs4 import BeautifulSoup
+import time
+import re
+
+def clean_rate(text):
+    match = re.search(r"\d+(\.\d+)?", text)
+    return float(match.group()) if match else 0
 
 def extract_au_bank():
-    URL = "https://www.au.bank.in/interest-rates/fixed-deposit-interest-rates"
 
-    r = safe_get(URL, headers=HEADERS)
-    if not r:
-        return 0, ""
+    url = "https://www.au.bank.in/interest-rates/fixed-deposit-interest-rates"
 
-    r.encoding = r.apparent_encoding
-    soup = BeautifulSoup(r.text, "lxml")
+    options = Options()
+    options.add_argument("--headless")
+    options.add_argument("--start-maximized")
+    options.add_argument("--disable-blink-features=AutomationControlled")
 
-    target_heading = None
+    driver = webdriver.Chrome(options=options)
+    driver.get(url)
 
-    # Find heading containing Retail FD < 3 Cr
-    for tag in soup.find_all(["h2", "h3", "strong", "p"]):
-        text = tag.get_text(strip=True)
+    time.sleep(6)  # allow JS to fully render
 
-        if "Retail Fixed Deposits" in text and "< ₹3 Crore" in text:
-            target_heading = tag
-            break
-
-    if not target_heading:
-        return 0, ""
-
-    # The table is usually the next table after heading
-    table = target_heading.find_next("table")
-
-    if not table:
-        return 0, ""
-
-    rows = table.find_all("tr")
-
-    if not rows:
-        return 0, ""
-
-    # Detect Interest Rate column index
-    header_cells = [h.get_text(strip=True) for h in rows[0].find_all(["th", "td"])]
-
-    rate_col_index = -1
-
-    for i, h in enumerate(header_cells):
-        if "interest" in h.lower():
-            rate_col_index = i
-            break
-
-    if rate_col_index == -1:
-        return 0, ""
+    soup = BeautifulSoup(driver.page_source, "lxml")
+    driver.quit()
 
     best_rate = 0
     best_period = ""
 
-    # Scan FD data rows
-    for row in rows[1:]:
-        cols = [c.get_text(strip=True) for c in row.find_all("td")]
+    tables = soup.find_all("table")
 
-        if len(cols) <= rate_col_index:
-            continue
+    for table in tables:
+        rows = table.find_all("tr")
 
-        period = cols[0]
-        rate = clean_rate(cols[rate_col_index])
+        for row in rows[1:]:
+            cols = [c.get_text(strip=True) for c in row.find_all("td")]
 
-        if rate > best_rate and rate <= 20:
-            best_rate = rate
-            best_period = period
+            if len(cols) < 2:
+                continue
+
+            period = cols[0]
+            rate = clean_rate(cols[1])
+
+            if rate > best_rate and rate <= 20:
+                best_rate = rate
+                best_period = period
 
     return best_rate, best_period
-
-
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
