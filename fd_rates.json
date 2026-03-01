@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-01 03:26",
+  "last_updated": "2026-03-01 06:35",
   "banks": [
     {
       "bank": "Bandhan Bank",
@@ -14,13 +14,6 @@
       "period": "450 days \u2013 2 years",
       "rate_general": "7.00%",
       "rate_senior": "7.50%"
-    },
-    {
-      "bank": "SBI",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "2 Years",
-      "rate_general": "6.80%",
-      "rate_senior": "7.30%"
     },
     {
       "bank": "Bank of Maharashtra",
@@ -63,6 +56,13 @@
       "period": "2222",
       "rate_general": "6.50%",
       "rate_senior": "7.00%"
+    },
+    {
+      "bank": "SBI",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "2 years to less than 3 years",
+      "rate_general": "6.45%",
+      "rate_senior": "6.95%"
     },
     {
       "bank": "HDFC",
