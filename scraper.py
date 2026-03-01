@@ -48,25 +48,33 @@ def clean_rate(text):
 
 
 # ---------- SBI ----------
+def clean_rate(text):
+    match = re.search(r"\d+\.\d+", text)
+    return float(match.group()) if match else 0
+
 def extract_sbi():
     URL = "https://sbi.bank.in/web/interest-rates/deposit-rates/retail-domestic-term-deposits"
     r = requests.get(URL, headers=HEADERS, timeout=30)
     soup = BeautifulSoup(r.text, "lxml")
 
+    first_table = soup.find("table")  # ONLY FIRST TABLE
+
     best_rate = 0
     best_period = ""
 
-    for table in soup.find_all("table"):
-        for row in table.find_all("tr"):
-            cols = [c.get_text(strip=True) for c in row.find_all("td")]
+    for row in first_table.find_all("tr"):
+        cols = [c.get_text(strip=True) for c in row.find_all("td")]
 
-            if len(cols) >= 3:
-                rate = clean_rate(cols[2])
-                if rate > best_rate:
-                    best_rate = rate
-                    best_period = cols[0]
+        if len(cols) >= 2:
+            tenure = cols[0]
+            rate = clean_rate(cols[1])  # ✅ General Public column
+
+            if rate > best_rate:
+                best_rate = rate
+                best_period = tenure
 
     return best_rate, best_period
+
 
 
 # ---------- HDFC ----------
