@@ -1,12 +1,12 @@
 {
-  "last_updated": "2026-03-05 03:13",
+  "last_updated": "2026-03-06 03:11",
   "banks": [
     {
       "bank": "Bandhan Bank",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "2 years to less than 3 years.",
-      "rate_general": "7.20%",
-      "rate_senior": "7.70%"
+      "rate_general": "7.25%",
+      "rate_senior": "7.75%"
     },
     {
       "bank": "IDFC FIRST Bank",
@@ -37,6 +37,13 @@
       "rate_senior": "7.10%"
     },
     {
+      "bank": "HDFC",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "3 Years 1 day to < 4 Years 7 Months",
+      "rate_general": "6.50%",
+      "rate_senior": "7.00%"
+    },
+    {
       "bank": "Canara Bank",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "555 Days*",
@@ -61,13 +68,6 @@
       "bank": "SBI",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "2 years to less than 3 years",
-      "rate_general": "6.45%",
-      "rate_senior": "6.95%"
-    },
-    {
-      "bank": "HDFC",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "18 months to < 21 months",
       "rate_general": "6.45%",
       "rate_senior": "6.95%"
     },
