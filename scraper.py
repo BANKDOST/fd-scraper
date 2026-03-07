@@ -408,6 +408,7 @@ def extract_bandhan():
 
     return best_rate, best_period
 
+
 # ---------- IDBI Bank ----------
 def extract_idbi():
     URL = "https://www.idbi.bank.in/interest-rates.aspx"
@@ -418,35 +419,36 @@ def extract_idbi():
     best_rate = 0
     best_period = ""
 
-    # find the heading text
-    heading = soup.find(string=re.compile(r"Retail Term Deposits\s*\(<\s*3\s*Cr", re.I))
-    if not heading:
+    # find the exact text
+    text_node = soup.find(string=re.compile(r"Retail Term Deposits\s*\(<\s*3\s*Cr", re.I))
+    if not text_node:
         return 0, ""
 
-    # go to the heading tag then find the next table
-    heading_tag = heading.find_parent()
-    table = heading_tag.find_next("table")
+    # move to the table container
+    container = text_node.find_next("div", class_="table-responsive")
+    if not container:
+        return 0, ""
+
+    table = container.find("table")
 
     for row in table.find_all("tr"):
-        cells = [c.get_text(" ", strip=True) for c in row.find_all("td")]
+        cols = [c.get_text(" ", strip=True) for c in row.find_all("td")]
 
-        if len(cells) < 3:
+        if len(cols) < 3:
             continue
 
-        period = cells[0]
+        period = cols[0]
 
-        # ensure this row is FD tenure
         if not re.search(r"(day|month|year)", period.lower()):
             continue
 
-        rate = clean_rate(cells[1])   # General customers column
+        rate = clean_rate(cols[1])
 
         if rate > best_rate:
             best_rate = rate
             best_period = period
 
     return best_rate, best_period
-
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
