@@ -407,6 +407,7 @@ def extract_bandhan():
             best_period = tenure.replace("for a tenure of", "").strip()
 
     return best_rate, best_period
+
 # ---------- IDBI Bank ----------
 def extract_idbi():
     URL = "https://www.idbi.bank.in/interest-rates.aspx"
@@ -416,14 +417,15 @@ def extract_idbi():
 
     best_rate = 0
     best_period = ""
-    best_senior = 0
 
-    # locate the Retail Term Deposits section
-    heading = soup.find(string=re.compile(r"Retail Term Deposits", re.I))
+    # find the heading text
+    heading = soup.find(string=re.compile(r"Retail Term Deposits\s*\(<\s*3\s*Cr", re.I))
     if not heading:
         return 0, ""
 
-    table = heading.find_parent().find_next("table")
+    # go to the heading tag then find the next table
+    heading_tag = heading.find_parent()
+    table = heading_tag.find_next("table")
 
     for row in table.find_all("tr"):
         cells = [c.get_text(" ", strip=True) for c in row.find_all("td")]
@@ -433,19 +435,15 @@ def extract_idbi():
 
         period = cells[0]
 
+        # ensure this row is FD tenure
         if not re.search(r"(day|month|year)", period.lower()):
             continue
 
-        rate_general = clean_rate(cells[1])
-        rate_senior = clean_rate(cells[2])
+        rate = clean_rate(cells[1])   # General customers column
 
-        if rate_general <= 0:
-            continue
-
-        if rate_general > best_rate:
-            best_rate = rate_general
+        if rate > best_rate:
+            best_rate = rate
             best_period = period
-            best_senior = rate_senior
 
     return best_rate, best_period
 
