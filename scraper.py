@@ -419,17 +419,16 @@ def extract_idbi():
     best_rate = 0
     best_period = ""
 
-    # find the exact text
-    text_node = soup.find(string=re.compile(r"Retail Term Deposits\s*\(<\s*3\s*Cr", re.I))
-    if not text_node:
+    # find exact heading
+    heading = soup.find(string=re.compile(r"Retail Term Deposits\s*\(<\s*3\s*Cr\)", re.I))
+    if not heading:
         return 0, ""
 
-    # move to the table container
-    container = text_node.find_next("div", class_="table-responsive")
-    if not container:
-        return 0, ""
+    # move to heading tag
+    tag = heading.find_parent()
 
-    table = container.find("table")
+    # first table after heading
+    table = tag.find_next("table")
 
     for row in table.find_all("tr"):
         cols = [c.get_text(" ", strip=True) for c in row.find_all("td")]
