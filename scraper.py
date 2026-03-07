@@ -408,6 +408,46 @@ def extract_bandhan():
 
     return best_rate, best_period
 
+# ---------- IDBI Bank ----------
+def extract_idbi():
+    URL = "https://www.idbi.bank.in/interest-rates.aspx"
+
+    r = requests.get(URL, headers=HEADERS, timeout=30)
+    soup = BeautifulSoup(r.text, "lxml")
+
+    best_rate = 0
+    best_period = ""
+
+    # locate "Retail Term Deposits (< 3 Cr)" section
+    heading = soup.find(string=re.compile(r"Retail Term Deposits", re.I))
+    if not heading:
+        return best_rate, best_period
+
+    table = heading.find_parent().find_next("table")
+
+    for row in table.find_all("tr"):
+        cells = [c.get_text(" ", strip=True) for c in row.find_all("td")]
+
+        if len(cells) < 2:
+            continue
+
+        period = cells[0]
+
+        # tenure must look like FD duration
+        if not re.search(r"(day|month|year)", period.lower()):
+            continue
+
+        rate = clean_rate(cells[1])  # General Customers column
+
+        if rate <= 0:
+            continue
+
+        if rate > best_rate:
+            best_rate = rate
+            best_period = period
+
+    return best_rate, best_period
+
 
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
@@ -420,6 +460,7 @@ idfc_rate, idfc_period = extract_idfcfirst()
 bom_rate, bom_period = extract_bom()
 central_rate, central_period = extract_central_tables()
 bandhan_rate, bandhan_period = extract_bandhan()
+idbi_rate, idbi_period = extract_idbi()
 
 
 
@@ -442,6 +483,7 @@ banks = [
     {"bank": "Bank of Maharashtra", "period": bom_period, "rate": bom_rate},
     {"bank": "Central Bank", "period": central_period, "rate": central_rate},
     {"bank": "Bandhan Bank", "period": bandhan_period, "rate": bandhan_rate},
+    {"bank": "IDBI Bank", "period": idbi_period, "rate": idbi_rate},
    
 ]
 
