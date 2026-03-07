@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-07 17:47",
+  "last_updated": "2026-03-07 17:55",
   "banks": [
     {
       "bank": "Bandhan Bank",
@@ -14,6 +14,13 @@
       "period": "450 days \u2013 2 years",
       "rate_general": "7.00%",
       "rate_senior": "7.50%"
+    },
+    {
+      "bank": "IDBI Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "1 year",
+      "rate_general": "6.86%",
+      "rate_senior": "7.36%"
     },
     {
       "bank": "Bank of Maharashtra",
@@ -82,13 +89,6 @@
       "bank": "Indian Bank",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "Ind Secure (444 Days)",
-      "rate_general": "6.45%",
-      "rate_senior": "6.95%"
-    },
-    {
-      "bank": "IDBI Bank",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "700 Days",
       "rate_general": "6.45%",
       "rate_senior": "6.95%"
     }
