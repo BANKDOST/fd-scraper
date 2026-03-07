@@ -408,7 +408,6 @@ def extract_bandhan():
 
     return best_rate, best_period
 
-
 # ---------- IDBI Bank ----------
 def extract_idbi():
     URL = "https://www.idbi.bank.in/interest-rates.aspx"
@@ -419,21 +418,24 @@ def extract_idbi():
     best_rate = 0
     best_period = ""
 
-    # find exact heading
+    # find the Retail FD heading
     heading = soup.find(string=re.compile(r"Retail Term Deposits\s*\(<\s*3\s*Cr\)", re.I))
     if not heading:
         return 0, ""
 
-    # move to heading tag
-    tag = heading.find_parent()
+    # move up to the section that contains the table
+    section = heading.find_parent("div")
 
-    # first table after heading
-    table = tag.find_next("table")
+    # get the FIRST table inside this section only
+    table = section.find("table")
+
+    if not table:
+        return 0, ""
 
     for row in table.find_all("tr"):
         cols = [c.get_text(" ", strip=True) for c in row.find_all("td")]
 
-        if len(cols) < 3:
+        if len(cols) < 2:
             continue
 
         period = cols[0]
@@ -448,7 +450,6 @@ def extract_idbi():
             best_period = period
 
     return best_rate, best_period
-
 # ---------- RUN ----------
 sbi_rate, sbi_period = extract_sbi()
 hdfc_rate, hdfc_period = extract_hdfc()
