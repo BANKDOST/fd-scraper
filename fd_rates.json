@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-03-13 03:12",
+  "last_updated": "2026-03-14 03:10",
   "banks": [
     {
       "bank": "Bandhan Bank",
@@ -88,9 +88,9 @@
     {
       "bank": "Indian Bank",
       "scheme": "Callable FD \u2264 3Cr",
-      "period": "Ind Secure (444 Days)",
-      "rate_general": "6.45%",
-      "rate_senior": "6.95%"
+      "period": "",
+      "rate_general": "0.00%",
+      "rate_senior": "0.50%"
     }
   ]
 }
