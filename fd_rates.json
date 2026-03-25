@@ -1,10 +1,10 @@
 {
-  "last_updated": "2026-03-24 03:18",
+  "last_updated": "2026-03-25 03:22",
   "banks": [
     {
       "bank": "Bandhan Bank",
       "scheme": "Callable FD \u2264 3Cr",
-      "period": "2 years to less than 3 years.",
+      "period": "2 years to less than 5\u00a0years.",
       "rate_general": "7.25%",
       "rate_senior": "7.75%"
     },
