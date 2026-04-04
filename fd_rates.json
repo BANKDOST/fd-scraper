@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-04-03 03:31",
+  "last_updated": "2026-04-04 03:20",
   "banks": [
     {
       "bank": "Bandhan Bank",
@@ -58,13 +58,6 @@
       "rate_senior": "7.00%"
     },
     {
-      "bank": "Central Bank",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "2222",
-      "rate_general": "6.50%",
-      "rate_senior": "7.00%"
-    },
-    {
       "bank": "IDBI Bank",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "> 2 Years to      <3years",
@@ -87,6 +80,13 @@
     },
     {
       "bank": "Indian Bank",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "",
+      "rate_general": "0.00%",
+      "rate_senior": "0.50%"
+    },
+    {
+      "bank": "Central Bank",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "",
       "rate_general": "0.00%",
