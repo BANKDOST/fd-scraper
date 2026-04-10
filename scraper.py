@@ -174,38 +174,7 @@ def extract_union():
     return best_rate, best_period
 
 # ---------- Indian Bank ----------
-def extract_indianbank():
-    URL = "https://indianbank.bank.in/departments/deposit-rates/"
-    r = requests.get(URL, headers=HEADERS, timeout=30)
-    soup = BeautifulSoup(r.text, "lxml")
 
-    best_rate = 0
-    best_period = ""
-
-    table = soup.find("table")
-    if not table:
-        return 0, ""
-
-    for row in table.find_all("tr"):
-        cols = [c.get_text(strip=True) for c in row.find_all("td")]
-
-        # skip header or bad rows
-        if len(cols) < 2:
-            continue
-
-        period = cols[0]
-        rate_text = cols[1]
-
-        if not re.search(r"\d+(?:\.\d+)?", rate_text):
-            continue
-
-        rate = clean_rate(rate_text)
-
-        if rate > best_rate:
-            best_rate = rate
-            best_period = period
-
-    return best_rate, best_period
 
 # ---------- IDFC FIRST Bank (PDF multi-table parsing) ----------
 def extract_idfcfirst():
@@ -456,7 +425,6 @@ hdfc_rate, hdfc_period = extract_hdfc()
 pnb_rate, pnb_period = extract_pnb()
 canara_rate, canara_period = extract_canara()
 union_rate, union_period = extract_union()
-indianbank_rate, indianbank_period = extract_indianbank()
 idfc_rate, idfc_period = extract_idfcfirst()
 bom_rate, bom_period = extract_bom()
 central_rate, central_period = extract_central_tables()
@@ -479,7 +447,6 @@ banks = [
     {"bank": "ICICI", "period": "3 Years 1 Day to 5 Years", "rate": 6.5},
     {"bank": "Bank of Baroda", "period": "444 days", "rate": 6.45},
     {"bank": "Union Bank", "period": union_period, "rate": union_rate},
-    {"bank": "Indian Bank", "period": indianbank_period, "rate": indianbank_rate},
     {"bank": "IDFC FIRST Bank", "period": idfc_period, "rate": idfc_rate},
     {"bank": "Bank of Maharashtra", "period": bom_period, "rate": bom_rate},
     {"bank": "Central Bank", "period": central_period, "rate": central_rate},
