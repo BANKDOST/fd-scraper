@@ -175,6 +175,12 @@ def extract_union():
 
 # ---------- Indian Bank ----------
 
+def extract_indianbank():
+    # Website structure changed; using manual values for IND SECURE
+    best_rate = 6.60
+    best_period = "444 Days (IND SECURE)"
+    return best_rate, best_period
+
 
 # ---------- IDFC FIRST Bank (PDF multi-table parsing) ----------
 def extract_idfcfirst():
