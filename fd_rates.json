@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-04-19 03:53",
+  "last_updated": "2026-04-20 03:56",
   "banks": [
     {
       "bank": "Bandhan Bank",
@@ -39,7 +39,7 @@
     {
       "bank": "Union Bank",
       "scheme": "Callable FD \u2264 3Cr",
-      "period": "444 days (New Slab)",
+      "period": "444 days",
       "rate_general": "6.60%",
       "rate_senior": "7.10%"
     },
