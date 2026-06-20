@@ -1,12 +1,19 @@
 {
-  "last_updated": "2026-06-18 05:12",
+  "last_updated": "2026-06-20 04:47",
   "banks": [
     {
       "bank": "Bandhan Bank",
       "scheme": "Callable FD \u2264 3Cr",
-      "period": "2 years to less than 5\u00a0years.",
-      "rate_general": "7.25%",
-      "rate_senior": "7.75%"
+      "period": "2 years to less than 3\u00a0years.",
+      "rate_general": "7.45%",
+      "rate_senior": "7.95%"
+    },
+    {
+      "bank": "Bank of Maharashtra",
+      "scheme": "Callable FD \u2264 3Cr",
+      "period": "One Year",
+      "rate_general": "7.20%",
+      "rate_senior": "7.70%"
     },
     {
       "bank": "IDFC FIRST Bank",
@@ -19,13 +26,6 @@
       "bank": "Union Bank",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "555 Days",
-      "rate_general": "6.65%",
-      "rate_senior": "7.15%"
-    },
-    {
-      "bank": "Bank of Maharashtra",
-      "scheme": "Callable FD \u2264 3Cr",
-      "period": "400 days",
       "rate_general": "6.65%",
       "rate_senior": "7.15%"
     },
