@@ -1,5 +1,5 @@
 {
-  "last_updated": "2026-07-27 04:12",
+  "last_updated": "2026-07-28 03:43",
   "banks": [
     {
       "bank": "Bandhan Bank",
@@ -12,8 +12,8 @@
       "bank": "Bank of Maharashtra",
       "scheme": "Callable FD \u2264 3Cr",
       "period": "One Year",
-      "rate_general": "7.20%",
-      "rate_senior": "7.70%"
+      "rate_general": "7.10%",
+      "rate_senior": "7.60%"
     },
     {
       "bank": "IDFC FIRST Bank",
